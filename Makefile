@@ -1,6 +1,6 @@
 PROJECT = nat
 PROJECT_DESCRIPTION = implements NAT handling facilities
-PROJECT_VERSION = 0.1.°
+PROJECT_VERSION = 0.1.0
 
 DEPS = inet_cidr inet_ext
 
