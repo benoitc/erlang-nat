@@ -11,7 +11,7 @@ __Version:__ 0.1.0
 Library that implements NAT facilities.
 
 Currently supported protocols:
-- napmp
+- natpmp
 - UPNP v1
 
 ## Usage
