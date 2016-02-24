@@ -5,7 +5,7 @@ PROJECT_VERSION = 0.1.0
 DEPS = inet_cidr inet_ext
 
 dep_inet_cidr = git https://github.com/benoitc/inet_cidr 0.2.0
-dep_inet_ext = git https://github.com/benoitc/inet_ext 0.3.2
+dep_inet_ext = git https://github.com/benoitc/inet_ext 0.4.0
 
 DOC_DEPS = edown
 EDOC_OPTS = {doclet, edown_doclet}, \
