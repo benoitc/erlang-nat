@@ -31,9 +31,9 @@
                     | {error, term()}.
 discover() ->
     _ = application:start(inets),
-    _ = random:seed(erlang:phash2([node()]),
-                    erlang:monotonic_time(),
-                    erlang:unique_integer()),
+    _ = rand_compat:seed(erlang:phash2([node()]),
+                         erlang:monotonic_time(),
+                         erlang:unique_integer()),
     {ok, Sock} = gen_udp:open(0, [{active, once}, inet, binary]),
 
     ST = <<"urn:schemas-upnp-org:device:InternetGatewayDevice:1" >>,

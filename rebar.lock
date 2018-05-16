@@ -1,8 +1,10 @@
 {"1.1.0",
 [{<<"inet_cidr">>,{pkg,<<"erl_cidr">>,<<"1.0.1">>},0},
- {<<"inet_ext">>,{pkg,<<"inet_ext">>,<<"0.4.0">>},0}]}.
+ {<<"inet_ext">>,{pkg,<<"inet_ext">>,<<"0.4.0">>},0},
+ {<<"rand_compat">>,{pkg,<<"rand_compat">>,<<"0.0.3">>},0}]}.
 [
 {pkg_hash,[
  {<<"inet_cidr">>, <<"9EA93F2B885820C1C3ADEC24E7AB5B04AAD829FBF7B3F8F41F1ACD4550D8BF97">>},
- {<<"inet_ext">>, <<"EF51FE5EA13DB6B40CBA48E66D9117BBD31E5A4347FA432B83D0C0547C7AB522">>}]}
+ {<<"inet_ext">>, <<"EF51FE5EA13DB6B40CBA48E66D9117BBD31E5A4347FA432B83D0C0547C7AB522">>},
+ {<<"rand_compat">>, <<"011646BC1F0B0C432FE101B816F25B9BBB74A085713CEE1DAFD2D62E9415EAD3">>}]}
 ].
