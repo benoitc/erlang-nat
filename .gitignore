@@ -5,3 +5,7 @@ deps
 test/*.tmp
 test/*.beam
 .rebar
+_build/
+erl_crash.dump
+data/
+log/
