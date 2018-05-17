@@ -2,7 +2,7 @@
 %%% This file is part of erlang-nat released under the MIT license.
 %%% See the NOTICE for more information.
 %%%
-%%% Copyright (c) 2016 Benoît Chesneau <benoitc@refuge.io>
+%%% Copyright (c) 2016-2018 Benoît Chesneau <benoitc@refuge.io>
 
 -module(nat).
 

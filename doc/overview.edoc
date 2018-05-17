@@ -1,11 +1,11 @@
 %%==============================================================================
 %% See the NOTICE for more information.
 %%
-%% Copyright (c) 2016 Benoît Chesneau <benoitc@refuge.io>
+%% Copyright (c) 2016-2018 Benoît Chesneau <benoitc@refuge.io>
 %%==============================================================================
 
-@copyright 2016 Benoît Chesneau.
-@version 0.1.0
+@copyright 2016-2018 Benoît Chesneau.
+@version 0.2.0
 @title nat -  implements NAT handling facilities
 
 @doc
@@ -17,6 +17,7 @@ Library that implements NAT facilities.
 Currently supported protocols:
 - natpmp
 - UPNP v1
+- UPNP v2
 
 ## Usage
 
