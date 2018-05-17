@@ -269,7 +269,6 @@ get_location(Raw) ->
 get_service_url(RootUrl) ->
     case httpc:request(RootUrl) of
         {ok, {{_, 200, _}, _, Body}} ->
-            io:format("got ~p~n", [RootUrl]),
             {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
             [Device | _] = xmerl_xpath:string("//device", Xml),
             case device_type(Device) of
