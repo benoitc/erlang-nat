@@ -15,7 +15,7 @@
 
 -include("nat.hrl").
 
--define(BACKENDS, [natupnp_v1, natpmp]).
+-define(BACKENDS, [natupnp_v1, natupnp_v2, natpmp]).
 -define(DISCOVER_TIMEOUT, 10000).
 
 -type nat_ctx() :: any().
