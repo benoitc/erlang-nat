@@ -22,16 +22,8 @@
 -include("nat.hrl").
 -include_lib("xmerl/include/xmerl.hrl").
 
--record(nat_upnp, {
-          service_url,
-          ip}).
-
--type nat_upnp() :: #nat_upnp{}.
--export_type([nat_upnp/0]).
-
-
 %% @doc discover the gateway and our IP to associate
--spec discover() -> {ok, Context:: nat_upnp()}
+-spec discover() -> {ok, Context:: nat:nat_upnp()}
                     | {error, term()}.
 discover() ->
     _ = application:start(inets),
@@ -127,16 +119,16 @@ get_internal_address(#nat_upnp{ip=Ip}) ->
 
 
 %% @doc Add a port mapping with default lifetime to 3600 seconds
--spec add_port_mapping(Context :: nat_upnp(),
-                       Protocol:: tcp | udp, ExternalPort :: integer(),
+-spec add_port_mapping(Context :: nat:nat_upnp(),
+                       Protocol:: nat:nat_protocol(), ExternalPort :: integer(),
                        InternalPort :: integer()) -> ok | {error, term()}.
 add_port_mapping(Context, Protocol, InternalPort, ExternalPort) ->
     add_port_mapping(Context, Protocol, InternalPort, ExternalPort,
                      ?RECOMMENDED_MAPPING_LIFETIME_SECONDS).
 
 %% @doc Add a port mapping and release after Timeout
--spec add_port_mapping(Context :: nat_upnp_proto:nat_upnp(),
-                       Protocol:: tcp | udp, InternalPort :: integer(),
+-spec add_port_mapping(Context :: nat:nat_upnp(),
+                       Protocol:: nat:nat_protocol(), InternalPort :: integer(),
                        ExternalPort :: integer(),
                        Lifetime :: integer()) -> ok | {error, term()}.
 add_port_mapping(Ctx, Protocol, InternalPort, ExternalPort, 0) ->
@@ -201,8 +193,8 @@ add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}, Protocol, InternalPort,
     end.
 
 %% @doc Delete a port mapping from the router
--spec delete_port_mapping(Context :: nat_upnp(),
-                          Protocol :: tcp | udp, InternalPort :: integer(),
+-spec delete_port_mapping(Context :: nat:nat_upnp(),
+                          Protocol :: nat:nat_protocol(), InternalPort :: integer(),
                           ExternalPort :: integer())
 -> ok | {error, term()}.
 delete_port_mapping(#nat_upnp{service_url=Url}, Protocol0, _InternalPort, ExternalPort) ->
@@ -222,7 +214,7 @@ delete_port_mapping(#nat_upnp{service_url=Url}, Protocol0, _InternalPort, Extern
 
 
 %% @doc get router status
--spec status_info(Context :: nat_upnp())
+-spec status_info(Context :: nat:nat_upnp())
 -> {Status::string(), LastConnectionError::string(), Uptime::string()}
    | {error, term()}.
 status_info(#nat_upnp{service_url=Url}) ->
