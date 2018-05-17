@@ -4,6 +4,10 @@
 %%%
 %%% Copyright (c) 2016 Benoît Chesneau <benoitc@refuge.io>
 
+%% @doc Client for UPnP Device Control Protocol Internet Gateway Device v1.
+%%
+%% documented in detail at: http://upnp.org/specs/gw/UPnP-gw-InternetGatewayDevice-v1-Device.pdf
+
 -module(natupnp_v1).
 
 -export([discover/0]).
