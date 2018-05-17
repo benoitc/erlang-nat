@@ -10,22 +10,24 @@
 
 send(Socket, Ip, Port, Msg) ->
     Key = ?KEY([Ip, Port, Msg]),
+
+    dbg:tracer(process, {fun handle_trace/2, Key}),
+    dbg:p(self(), [r]),
+
     ?LOG("[REQ] ~p", [Key]),
-    case nat_cache:get(Key) of
+    Result = case nat_cache:get(Key) of
         {Socket2, Ip2, Port2, Msg2}=Cached ->
             ?LOG("[RESP] [CACHE] ~p", [Cached]),
             self() ! {udp, Socket2, Ip2, Port2, Msg2},
             ok;
         undefined ->
-            Return = ?MODULE_ORI:send_orig(Socket, Ip, Port, Msg),
-            receive
-                {udp, Socket2, Ip2, Port2, Msg2}=Data ->
-                    ?LOG("[RESP] [ORI] ~p", [Data]),
-                    nat_cache:put(Key, {Socket2, Ip2, Port2, Msg2}),
-                    self() ! {udp, Socket2, Ip2, Port2, Msg2},
-                    Return
-            after 1000 ->
-                ?LOG("[RESP] [ORI] ~p", [timeout]),
-                timeout
-            end
-    end.
+            ?MODULE_ORI:send_orig(Socket, Ip, Port, Msg)
+    end,
+    dbg:stop_clear(),
+    Result.
+
+handle_trace({trace, _Pid, 'receive', {udp, Socket, Ip, Port, Msg}=Data}, Key) ->
+    ?LOG("[RESP] [ORI] ~p", [Data]),
+    nat_cache:put(Key, {Socket, Ip, Port, Msg});
+handle_trace(_Trace, _Key) ->
+    ok.
