@@ -44,7 +44,6 @@ soap_request(Url, Function, Msg0) ->
 random_port() ->
     random:uniform(16#FFFF - 10000) + 10000.
 
-
 timestamp() ->
     {Mega,Sec, _} = erlang_ts(),
     Mega*1000000+Sec.
