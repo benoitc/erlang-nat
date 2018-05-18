@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Module nat</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module nat</h1>
+<ul class="index"><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+
+
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-nat_ctx">nat_ctx()</a></h3>
+<p><tt>nat_ctx() = any()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-nat_protocol">nat_protocol()</a></h3>
+<p><tt>nat_protocol() = tcp | udp</tt></p>
+
+
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_port_mapping-4">add_port_mapping/4</a></td><td>add a port mapping with default lifetime.</td></tr>
+<tr><td valign="top"><a href="#add_port_mapping-5">add_port_mapping/5</a></td><td>add a port mapping.</td></tr>
+<tr><td valign="top"><a href="#debug_start-1">debug_start/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#debug_stop-0">debug_stop/0</a></td><td></td></tr>
+<tr><td valign="top"><a href="#delete_port_mapping-4">delete_port_mapping/4</a></td><td>delete a port mapping.</td></tr>
+<tr><td valign="top"><a href="#discover-0">discover/0</a></td><td>discover a NAT gateway and return a context that can be used with
+  othe functions.</td></tr>
+<tr><td valign="top"><a href="#get_device_address-1">get_device_address/1</a></td><td>get the IP address of the gateway.</td></tr>
+<tr><td valign="top"><a href="#get_external_address-1">get_external_address/1</a></td><td>return the external address of the gateway device.</td></tr>
+<tr><td valign="top"><a href="#get_internal_address-1">get_internal_address/1</a></td><td>return the address address of the local device.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="add_port_mapping-4">add_port_mapping/4</a></h3>
+<div class="spec">
+<p><tt>add_port_mapping(NatCtx, Protocol, InternalPort, ExternalPortRequest) -&gt; {ok, Since, InternalPort, ExternalPort, MappingLifetime} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>NatCtx = <a href="#type-nat_ctx">nat_ctx()</a></tt></li><li><tt>Protocol = <a href="#type-nat_protocol">nat_protocol()</a></tt></li><li><tt>InternalPort = non_neg_integer()</tt></li><li><tt>ExternalPortRequest = non_neg_integer()</tt></li><li><tt>Since = non_neg_integer()</tt></li><li><tt>ExternalPort = non_neg_integer()</tt></li><li><tt>MappingLifetime = non_neg_integer()</tt></li><li><tt>Reason = any() | timeout</tt></li></ul></p>
+</div><p>add a port mapping with default lifetime</p>
+
+<h3 class="function"><a name="add_port_mapping-5">add_port_mapping/5</a></h3>
+<div class="spec">
+<p><tt>add_port_mapping(NatCtx, Protocol, InternalPort, ExternalPortRequest, Lifetime) -&gt; {ok, Since, InternalPort, ExternalPort, MappingLifetime} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>NatCtx = <a href="#type-nat_ctx">nat_ctx()</a></tt></li><li><tt>Protocol = <a href="#type-nat_protocol">nat_protocol()</a></tt></li><li><tt>InternalPort = non_neg_integer()</tt></li><li><tt>ExternalPortRequest = non_neg_integer()</tt></li><li><tt>Lifetime = non_neg_integer()</tt></li><li><tt>Since = non_neg_integer()</tt></li><li><tt>ExternalPort = non_neg_integer()</tt></li><li><tt>MappingLifetime = non_neg_integer()</tt></li><li><tt>Reason = any() | timeout()</tt></li></ul></p>
+</div><p>add a port mapping</p>
+
+<h3 class="function"><a name="debug_start-1">debug_start/1</a></h3>
+<div class="spec">
+<p><tt>debug_start(File::string()) -&gt; ok</tt><br></p>
+</div>
+
+<h3 class="function"><a name="debug_stop-0">debug_stop/0</a></h3>
+<div class="spec">
+<p><tt>debug_stop() -&gt; ok</tt><br></p>
+</div>
+
+<h3 class="function"><a name="delete_port_mapping-4">delete_port_mapping/4</a></h3>
+<div class="spec">
+<p><tt>delete_port_mapping(NatCtx, Protocol, InternalPort, ExternalPortRequest) -&gt; ok | {error, Reason}</tt>
+<ul class="definitions"><li><tt>NatCtx = <a href="#type-nat_ctx">nat_ctx()</a></tt></li><li><tt>Protocol = <a href="#type-nat_protocol">nat_protocol()</a></tt></li><li><tt>InternalPort = non_neg_integer()</tt></li><li><tt>ExternalPortRequest = non_neg_integer()</tt></li><li><tt>Reason = any() | timeout</tt></li></ul></p>
+</div><p>delete a port mapping</p>
+
+<h3 class="function"><a name="discover-0">discover/0</a></h3>
+<div class="spec">
+<p><tt>discover() -&gt; {ok, NatCtx} | no_nat</tt>
+<ul class="definitions"><li><tt>NatCtx = <a href="#type-nat_ctx">nat_ctx()</a></tt></li></ul></p>
+</div><p>discover a NAT gateway and return a context that can be used with
+  othe functions.</p>
+
+<h3 class="function"><a name="get_device_address-1">get_device_address/1</a></h3>
+<div class="spec">
+<p><tt>get_device_address(NatCtx) -&gt; {ok, DeviceIp} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>NatCtx = <a href="#type-nat_ctx">nat_ctx()</a></tt></li><li><tt>DeviceIp = string()</tt></li><li><tt>Reason = any()</tt></li></ul></p>
+</div><p>get the IP address of the gateway.</p>
+
+<h3 class="function"><a name="get_external_address-1">get_external_address/1</a></h3>
+<div class="spec">
+<p><tt>get_external_address(NatCtx) -&gt; {ok, ExternalIp} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>NatCtx = <a href="#type-nat_ctx">nat_ctx()</a></tt></li><li><tt>ExternalIp = string()</tt></li><li><tt>Reason = any()</tt></li></ul></p>
+</div><p>return the external address of the gateway device</p>
+
+<h3 class="function"><a name="get_internal_address-1">get_internal_address/1</a></h3>
+<div class="spec">
+<p><tt>get_internal_address(NatCtx) -&gt; {ok, InternalIp} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>NatCtx = <a href="#type-nat_ctx">nat_ctx()</a></tt></li><li><tt>InternalIp = string()</tt></li><li><tt>Reason = any()</tt></li></ul></p>
+</div><p>return the address address of the local device</p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc</i></p>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Module natpmp</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module natpmp</h1>
+<ul class="index"><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+
+
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-natpmp_error">natpmp_error()</a></h3>
+<p><tt>natpmp_error() = unsupported_version | not_authorized | network_failure | out_of_resource | unsupported_opcode | bad_response</tt></p>
+
+
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_port_mapping-4">add_port_mapping/4</a></td><td>add a port mapping with default lifetime.</td></tr>
+<tr><td valign="top"><a href="#add_port_mapping-5">add_port_mapping/5</a></td><td>add a port mapping.</td></tr>
+<tr><td valign="top"><a href="#delete_port_mapping-4">delete_port_mapping/4</a></td><td>delete a port mapping.</td></tr>
+<tr><td valign="top"><a href="#discover-0">discover/0</a></td><td>discover a Nat gateway.</td></tr>
+<tr><td valign="top"><a href="#get_device_address-1">get_device_address/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#get_external_address-1">get_external_address/1</a></td><td>get external ip.</td></tr>
+<tr><td valign="top"><a href="#get_internal_address-1">get_internal_address/1</a></td><td>get internal address used for this gateway.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="add_port_mapping-4">add_port_mapping/4</a></h3>
+<div class="spec">
+<p><tt>add_port_mapping(Gateway, Protocol, InternalPort, ExternalPortRequest) -&gt; {ok, Since, InternalPort, ExternalPort, MappingLifetime} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>Gateway = <a href="inet.html#type-ip_address">inet:ip_address()</a> | <a href="inet.html#type-hostname">inet:hostname()</a></tt></li><li><tt>Protocol = tcp | udp</tt></li><li><tt>InternalPort = non_neg_integer()</tt></li><li><tt>ExternalPortRequest = non_neg_integer()</tt></li><li><tt>Since = non_neg_integer()</tt></li><li><tt>ExternalPort = non_neg_integer()</tt></li><li><tt>MappingLifetime = non_neg_integer()</tt></li><li><tt>Reason = <a href="#type-natpmp_error">natpmp_error()</a></tt></li></ul></p>
+</div><p>add a port mapping with default lifetime</p>
+
+<h3 class="function"><a name="add_port_mapping-5">add_port_mapping/5</a></h3>
+<div class="spec">
+<p><tt>add_port_mapping(Gateway, Protocol, InternalPort, ExternalPortRequest, Lifetime) -&gt; {ok, Since, InternalPort, ExternalPort, MappingLifetime} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>Gateway = <a href="inet.html#type-ip_address">inet:ip_address()</a> | <a href="inet.html#type-hostname">inet:hostname()</a></tt></li><li><tt>Protocol = tcp | udp</tt></li><li><tt>InternalPort = non_neg_integer()</tt></li><li><tt>ExternalPortRequest = non_neg_integer()</tt></li><li><tt>Lifetime = non_neg_integer()</tt></li><li><tt>Since = non_neg_integer()</tt></li><li><tt>ExternalPort = non_neg_integer()</tt></li><li><tt>MappingLifetime = non_neg_integer()</tt></li><li><tt>Reason = <a href="#type-natpmp_error">natpmp_error()</a></tt></li></ul></p>
+</div><p>add a port mapping</p>
+
+<h3 class="function"><a name="delete_port_mapping-4">delete_port_mapping/4</a></h3>
+<div class="spec">
+<p><tt>delete_port_mapping(Gateway, Protocol, InternalPort, ExternalPortRequest) -&gt; ok | {error, Reason}</tt>
+<ul class="definitions"><li><tt>Gateway = <a href="inet.html#type-ip_address">inet:ip_address()</a> | <a href="inet.html#type-hostname">inet:hostname()</a></tt></li><li><tt>Protocol = tcp | udp</tt></li><li><tt>InternalPort = non_neg_integer()</tt></li><li><tt>ExternalPortRequest = non_neg_integer()</tt></li><li><tt>Reason = <a href="#type-natpmp_error">natpmp_error()</a></tt></li></ul></p>
+</div><p>delete a port mapping</p>
+
+<h3 class="function"><a name="discover-0">discover/0</a></h3>
+<div class="spec">
+<p><tt>discover() -&gt; {ok, Gateway} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>Gateway = <a href="inet.html#type-ip_address">inet:ip_address()</a></tt></li><li><tt>Reason = any()</tt></li></ul></p>
+</div><p>discover a Nat gateway</p>
+
+<h3 class="function"><a name="get_device_address-1">get_device_address/1</a></h3>
+<div class="spec">
+<p><tt>get_device_address(Gateway) -&gt; {ok, Ip} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>Gateway = <a href="inet.html#type-ip_address">inet:ip_address()</a> | <a href="inet.html#type-hostname">inet:hostname()</a></tt></li><li><tt>Ip = <a href="inet.html#type-ip_address">inet:ip_address()</a> | <a href="inet.html#type-hostname">inet:hostname()</a></tt></li><li><tt>Reason = <a href="#type-natpmp_error">natpmp_error()</a></tt></li></ul></p>
+</div>
+
+<h3 class="function"><a name="get_external_address-1">get_external_address/1</a></h3>
+<div class="spec">
+<p><tt>get_external_address(Gateway) -&gt; {ok, ExternalIp} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>Gateway = <a href="inet.html#type-ip_address">inet:ip_address()</a> | <a href="inet.html#type-hostname">inet:hostname()</a></tt></li><li><tt>ExternalIp = <a href="inet.html#type-ip_address">inet:ip_address()</a> | <a href="inet.html#type-hostname">inet:hostname()</a></tt></li><li><tt>Reason = <a href="#type-natpmp_error">natpmp_error()</a></tt></li></ul></p>
+</div><p>get external ip</p>
+
+<h3 class="function"><a name="get_internal_address-1">get_internal_address/1</a></h3>
+<div class="spec">
+<p><tt>get_internal_address(Gateway) -&gt; {ok, InternalIp} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>Gateway = <a href="inet.html#type-ip_address">inet:ip_address()</a> | <a href="inet.html#type-hostname">inet:hostname()</a></tt></li><li><tt>InternalIp = <a href="inet.html#type-ip_address">inet:ip_address()</a> | <a href="inet.html#type-hostname">inet:hostname()</a></tt></li><li><tt>Reason = any()</tt></li></ul></p>
+</div><p>get internal address used for this gateway</p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc</i></p>
+</body>
+</html>
