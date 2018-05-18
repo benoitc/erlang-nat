@@ -1,6 +1,10 @@
 {"1.1.0",
 [{<<"inet_cidr">>,{pkg,<<"erl_cidr">>,<<"1.0.1">>},0},
  {<<"inet_ext">>,{pkg,<<"inet_ext">>,<<"0.4.0">>},0},
+ {<<"intercept">>,
+  {git,"https://github.com/helium/intercept.git",
+       {ref,"dd8b1b3f16ad4c2696cd703af3b4fd84a4a05d1d"}},
+  0},
  {<<"rand_compat">>,{pkg,<<"rand_compat">>,<<"0.0.3">>},0}]}.
 [
 {pkg_hash,[

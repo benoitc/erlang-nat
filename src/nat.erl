@@ -12,6 +12,8 @@
 -export([get_internal_address/1]).
 -export([add_port_mapping/4, add_port_mapping/5]).
 -export([delete_port_mapping/4]).
+-export([debug_start/1]).
+-export([debug_stop/0]).
 
 -include("nat.hrl").
 
@@ -24,6 +26,19 @@
 -export_type([nat_ctx/0,
               nat_protocol/0]).
 
+-spec debug_start(string()) -> ok.
+debug_start(File) ->
+    {ok, _} = nat_cache:start([{file, File}]),
+    ok = intercept:add(gen_udp, gen_udp_intercepts, [{{send, 4}, send}]),
+    ok = intercept:add(httpc, httpc_intercepts, [{{request, 1}, request}, {{request, 4}, request}]),
+    ok = intercept:add(inet_ext, inet_ext_intercepts, [{{get_internal_address, 1}, get_internal_address}]).
+
+-spec debug_stop() -> ok.
+debug_stop() ->
+    ok = intercept:clean(gen_udp),
+    ok = intercept:clean(httpc),
+    ok = intercept:clean(inet_ext),
+    ok = nat_cache:stop().
 
 -spec discover() -> {ok, NatCtx} | no_nat when
       NatCtx :: nat_ctx().

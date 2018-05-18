@@ -26,7 +26,7 @@ You shoiuld start by discovering the NAT gateway if it exists:
                           "192.168.1.22"}}}
 ```
 
-If OK you will be able to use the context in other functions. For example to get 
+If OK you will be able to use the context in other functions. For example to get
 the external gateway:
 
 ```
@@ -64,6 +64,24 @@ This map the port 80 to the port 8080.
 ok = natpmp:delete_port_mapping(Ctx, Protocol, InternalPort, ExternalPort)
 ```
 
+## Debug
+
+You can scan a network and save the result to a file via:
+```
+./scripts/scan.sh saved_scan
+```
+While scanning readable logs will be created in the project's root directory under `log/`.
+
+This file can then be re-used to simulate and debug the network with:
+```
+nat:debug_start(FilePath),
+%Do you discover or port mapping here...
+nat:debug_stop().
+```
+
+
+
+
 ## Contribute
 
 For issues, comments or feedback please create an [issue](https://github.com/benoitc/erlang-nat/issues).
@@ -77,4 +95,3 @@ For issues, comments or feedback please create an [issue](https://github.com/ben
 <tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/nat_lib.md" class="module">nat_lib</a></td></tr>
 <tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/natpmp.md" class="module">natpmp</a></td></tr>
 <tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/natupnp_v1.md" class="module">natupnp_v1</a></td></tr></table>
-
