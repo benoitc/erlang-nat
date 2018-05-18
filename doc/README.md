@@ -2,9 +2,9 @@
 
 # nat -  implements NAT handling facilities #
 
-Copyright (c) 2016 Benoît Chesneau.
+Copyright (c) 2016-2018 Benoît Chesneau.
 
-__Version:__ 0.1.0
+__Version:__ 0.2.0
 
 # nat
 
@@ -13,6 +13,7 @@ Library that implements NAT facilities.
 Currently supported protocols:
 - natpmp
 - UPNP v1
+- UPNP v2
 
 ## Usage
 
@@ -73,8 +74,14 @@ For issues, comments or feedback please create an [issue](https://github.com/ben
 
 
 <table width="100%" border="0" summary="list of modules">
+<tr><td><a href="gen_udp_intercepts.md" class="module">gen_udp_intercepts</a></td></tr>
+<tr><td><a href="httpc_intercepts.md" class="module">httpc_intercepts</a></td></tr>
+<tr><td><a href="inet_ext_intercepts.md" class="module">inet_ext_intercepts</a></td></tr>
 <tr><td><a href="nat.md" class="module">nat</a></td></tr>
+<tr><td><a href="nat_cache.md" class="module">nat_cache</a></td></tr>
 <tr><td><a href="nat_lib.md" class="module">nat_lib</a></td></tr>
+<tr><td><a href="nat_scan.md" class="module">nat_scan</a></td></tr>
 <tr><td><a href="natpmp.md" class="module">natpmp</a></td></tr>
-<tr><td><a href="natupnp_v1.md" class="module">natupnp_v1</a></td></tr></table>
+<tr><td><a href="natupnp_v1.md" class="module">natupnp_v1</a></td></tr>
+<tr><td><a href="natupnp_v2.md" class="module">natupnp_v2</a></td></tr></table>
 

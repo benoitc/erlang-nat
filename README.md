@@ -2,9 +2,9 @@
 
 # nat -  implements NAT handling facilities #
 
-Copyright (c) 2016 Benoît Chesneau.
+Copyright (c) 2016-2018 Benoît Chesneau.
 
-__Version:__ 0.1.0
+__Version:__ 0.2.0
 
 # nat
 
@@ -13,6 +13,7 @@ Library that implements NAT facilities.
 Currently supported protocols:
 - natpmp
 - UPNP v1
+- UPNP v2
 
 ## Usage
 
@@ -26,7 +27,7 @@ You shoiuld start by discovering the NAT gateway if it exists:
                           "192.168.1.22"}}}
 ```
 
-If OK you will be able to use the context in other functions. For example to get
+If OK you will be able to use the context in other functions. For example to get 
 the external gateway:
 
 ```
@@ -64,24 +65,6 @@ This map the port 80 to the port 8080.
 ok = natpmp:delete_port_mapping(Ctx, Protocol, InternalPort, ExternalPort)
 ```
 
-## Debug
-
-You can scan a network and save the result to a file via:
-```
-./scripts/scan.sh saved_scan
-```
-While scanning readable logs will be created in the project's root directory under `log/`.
-
-This file can then be re-used to simulate and debug the network with:
-```
-nat:debug_start(FilePath),
-%Do you discover or port mapping here...
-nat:debug_stop().
-```
-
-
-
-
 ## Contribute
 
 For issues, comments or feedback please create an [issue](https://github.com/benoitc/erlang-nat/issues).
@@ -91,7 +74,14 @@ For issues, comments or feedback please create an [issue](https://github.com/ben
 
 
 <table width="100%" border="0" summary="list of modules">
+<tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/gen_udp_intercepts.md" class="module">gen_udp_intercepts</a></td></tr>
+<tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/httpc_intercepts.md" class="module">httpc_intercepts</a></td></tr>
+<tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/inet_ext_intercepts.md" class="module">inet_ext_intercepts</a></td></tr>
 <tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/nat.md" class="module">nat</a></td></tr>
+<tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/nat_cache.md" class="module">nat_cache</a></td></tr>
 <tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/nat_lib.md" class="module">nat_lib</a></td></tr>
+<tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/nat_scan.md" class="module">nat_scan</a></td></tr>
 <tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/natpmp.md" class="module">natpmp</a></td></tr>
-<tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/natupnp_v1.md" class="module">natupnp_v1</a></td></tr></table>
+<tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/natupnp_v1.md" class="module">natupnp_v1</a></td></tr>
+<tr><td><a href="http://github.com/benoitc/erlang-nat/blob/master/doc/natupnp_v2.md" class="module">natupnp_v2</a></td></tr></table>
+

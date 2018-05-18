@@ -1,16 +1,16 @@
 
 
-# Module natupnp_v1 #
+# Module natupnp_v2 #
 * [Description](#description)
 * [Function Index](#index)
 * [Function Details](#functions)
 
-Client for UPnP Device Control Protocol Internet Gateway Device v1.
+Client for UPnP Device Control Protocol Internet Gateway Device v2.
 
 <a name="description"></a>
 
 ## Description ##
-documented in detail at: http://upnp.org/specs/gw/UPnP-gw-InternetGatewayDevice-v1-Device.pdf<a name="index"></a>
+documented in detail at: http://upnp.org/specs/gw/UPnP-gw-InternetGatewayDevice-v2-Device.pdf<a name="index"></a>
 
 ## Function Index ##
 

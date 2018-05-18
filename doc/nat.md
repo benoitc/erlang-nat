@@ -34,7 +34,7 @@ nat_protocol() = tcp | udp
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_port_mapping-4">add_port_mapping/4</a></td><td>add a port mapping with default lifetime.</td></tr><tr><td valign="top"><a href="#add_port_mapping-5">add_port_mapping/5</a></td><td>add a port mapping.</td></tr><tr><td valign="top"><a href="#delete_port_mapping-4">delete_port_mapping/4</a></td><td>delete a port mapping.</td></tr><tr><td valign="top"><a href="#discover-0">discover/0</a></td><td>discover a NAT gateway and return a context that can be used with
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_port_mapping-4">add_port_mapping/4</a></td><td>add a port mapping with default lifetime.</td></tr><tr><td valign="top"><a href="#add_port_mapping-5">add_port_mapping/5</a></td><td>add a port mapping.</td></tr><tr><td valign="top"><a href="#debug_start-1">debug_start/1</a></td><td></td></tr><tr><td valign="top"><a href="#debug_stop-0">debug_stop/0</a></td><td></td></tr><tr><td valign="top"><a href="#delete_port_mapping-4">delete_port_mapping/4</a></td><td>delete a port mapping.</td></tr><tr><td valign="top"><a href="#discover-0">discover/0</a></td><td>discover a NAT gateway and return a context that can be used with
 othe functions.</td></tr><tr><td valign="top"><a href="#get_device_address-1">get_device_address/1</a></td><td>get the IP address of the gateway.</td></tr><tr><td valign="top"><a href="#get_external_address-1">get_external_address/1</a></td><td>return the external address of the gateway device.</td></tr><tr><td valign="top"><a href="#get_internal_address-1">get_internal_address/1</a></td><td>return the address address of the local device.</td></tr></table>
 
 
@@ -65,6 +65,24 @@ add_port_mapping(NatCtx, Protocol, InternalPort, ExternalPortRequest, Lifetime) 
 <ul class="definitions"><li><code>NatCtx = <a href="#type-nat_ctx">nat_ctx()</a></code></li><li><code>Protocol = <a href="#type-nat_protocol">nat_protocol()</a></code></li><li><code>InternalPort = non_neg_integer()</code></li><li><code>ExternalPortRequest = non_neg_integer()</code></li><li><code>Lifetime = non_neg_integer()</code></li><li><code>Since = non_neg_integer()</code></li><li><code>ExternalPort = non_neg_integer()</code></li><li><code>MappingLifetime = non_neg_integer()</code></li><li><code>Reason = any() | timeout()</code></li></ul>
 
 add a port mapping
+
+<a name="debug_start-1"></a>
+
+### debug_start/1 ###
+
+<pre><code>
+debug_start(File::string()) -&gt; ok
+</code></pre>
+<br />
+
+<a name="debug_stop-0"></a>
+
+### debug_stop/0 ###
+
+<pre><code>
+debug_stop() -&gt; ok
+</code></pre>
+<br />
 
 <a name="delete_port_mapping-4"></a>
 
