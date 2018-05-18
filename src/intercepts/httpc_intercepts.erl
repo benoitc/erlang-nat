@@ -1,3 +1,4 @@
+%% @hidden
 -module(httpc_intercepts).
 
 -export([
