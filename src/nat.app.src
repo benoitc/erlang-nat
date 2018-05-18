@@ -3,5 +3,9 @@
 	{vsn, "0.2.0"},
 	{modules, []},
 	{registered, []},
-	{applications, [kernel,stdlib,inet_cidr,inet_ext]}
+	{applications, [kernel,stdlib,inet_cidr,inet_ext]},
+  {maintainers, ["Benoit Chesneau"]},
+  {licenses, ["MIT"]},
+  {links, [{"Github", "https://github.com/benoitc/erlang-nat"}]},
+  {files, ["scripts", "src", "LICENSE", "NOTICE", "README.md", "rebar.config", "rebar.lock"]}
 ]}.
