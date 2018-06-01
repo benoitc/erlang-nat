@@ -62,7 +62,7 @@ This map the port 80 to the port 8080.
 ### Remove a port mapping
 
 ```
-ok = natpmp:delete_port_mapping(Ctx, Protocol, InternalPort, ExternalPort)
+ok = nat:delete_port_mapping(Ctx, Protocol, InternalPort, ExternalPort)
 ```
 
 ## Contribute
