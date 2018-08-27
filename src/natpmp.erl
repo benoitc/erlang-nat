@@ -44,10 +44,9 @@ get_external_address(Gateway) ->
 	nat_rpc(Gateway, Msg, 0).
 
 %% @doc get internal address used for this gateway
--spec get_internal_address(Gateway) -> {ok, InternalIp} | {error, Reason} when
+-spec get_internal_address(Gateway) -> {ok, InternalIp} when
 	Gateway :: inet:ip_address() | inet:hostname(),
-    InternalIp :: inet:ip_address() | inet:hostname(),
-    Reason :: any().
+    InternalIp :: inet:ip_address() | inet:hostname().
 get_internal_address(Gateway) ->
     {ok, inet_ext:get_internal_address(Gateway)}.
 
@@ -85,9 +84,8 @@ system_gateways() ->
     [Ip || {_, Ip} <- inet_ext:gateways()].
 
 %% @doc discover a Nat gateway
--spec discover() -> {ok, Gateway} | {error, Reason} when
-      Gateway :: inet:ip_address(),
-      Reason :: any().
+-spec discover() -> {ok, Gateway} | no_nat when
+      Gateway :: inet:ip_address().
 discover() ->
     IPs = case system_gateways() of
               [] ->  potential_gateways();

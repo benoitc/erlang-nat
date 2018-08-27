@@ -23,7 +23,8 @@
 
 %% @doc discover the gateway and our IP to associate
 -spec discover() -> {ok, Context:: nat:nat_upnp()}
-                    | {error, term()}.
+                    | {error, term()}
+                    | timeout.
 discover() ->
     _ = application:start(inets),
     _ = rand_compat:seed(erlang:phash2([node()]),
@@ -112,19 +113,16 @@ get_internal_address(#nat_upnp{ip=Ip}) ->
     {ok, Ip}.
 
 
-%% @doc Add a port mapping with default lifetime to 3600 seconds
--spec add_port_mapping(Context :: nat:nat_upnp(),
-                       Protocol:: nat:nat_protocol(), ExternalPort :: integer(),
-                       InternalPort :: integer()) -> ok | {error, term()}.
+%% @doc Add a port mapping with default lifetime to 0 seconds
+-spec add_port_mapping(nat:nat_upnp(), nat:nat_protocol(), integer(), integer()) ->
+    {ok, non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()} | {error, any()}.
 add_port_mapping(Context, Protocol, InternalPort, ExternalPort) ->
     add_port_mapping(Context, Protocol, InternalPort, ExternalPort,
                      ?RECOMMENDED_MAPPING_LIFETIME_SECONDS).
 
 %% @doc Add a port mapping and release after Timeout
--spec add_port_mapping(Context :: nat:nat_upnp(),
-                       Protocol:: nat:nat_protocol(), InternalPort :: integer(),
-                       ExternalPort :: integer(),
-                       Lifetime :: integer()) -> ok | {error, term()}.
+-spec add_port_mapping(nat:nat_upnp(), nat:nat_protocol(),integer(), integer(), integer()) ->
+    {ok, non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()} | {error, any()}.
 add_port_mapping(Ctx, Protocol0, InternalPort, ExternalPort, Lifetime) ->
     Protocol = protocol(Protocol0),
     case ExternalPort of
