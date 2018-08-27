@@ -23,8 +23,7 @@
 
 %% @doc discover the gateway and our IP to associate
 -spec discover() -> {ok, Context:: nat:nat_upnp()}
-                    | {error, term()}
-                    | timeout.
+                    | {error, term()}.
 discover() ->
     _ = application:start(inets),
     _ = rand_compat:seed(erlang:phash2([node()]),
@@ -49,7 +48,7 @@ discover() ->
 
 
 discover1(_Sock, _MSearch, ?NAT_TRIES) ->
-    timeout;
+    {error, timeout};
 discover1(Sock, MSearch, Tries) ->
     inet:setopts(Sock, [{active, once}]),
     Timeout = ?NAT_INITIAL_MS bsl Tries,

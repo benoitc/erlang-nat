@@ -69,8 +69,6 @@ natupnp_v1() ->
                 {ok, IntAddress} ->
                     ?LOG("[natupnp_v1] got internal address ~p", [IntAddress])
             end;
-        timeout ->
-            ?LOG("[natupnp_v1] failed to discover timeout", []);
         {error, _Reason} ->
             ?LOG("[natupnp_v1] failed to discover ~p", [_Reason])
     end.
@@ -105,8 +103,6 @@ natupnp_v2() ->
                 {ok, IntAddress} ->
                     ?LOG("[natupnp_v2] got internal address ~p", [IntAddress])
             end;
-        timeout ->
-            ?LOG("[natupnp_v2] failed to discover timeout", []);
         {error, _Reason} ->
             ?LOG("[natupnp_v2] failed to discover ~p", [_Reason])
     end.
@@ -141,6 +137,6 @@ natpmp() ->
                 {ok, IntAddress} ->
                     ?LOG("[natpmp] got internal address ~p", [IntAddress])
             end;
-        no_nat ->
+        {error, no_nat} ->
             ?LOG("[natpmp] failed to discover not nat", [])
     end.

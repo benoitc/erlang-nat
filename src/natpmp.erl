@@ -84,7 +84,7 @@ system_gateways() ->
     [Ip || {_, Ip} <- inet_ext:gateways()].
 
 %% @doc discover a Nat gateway
--spec discover() -> {ok, Gateway} | no_nat when
+-spec discover() -> {ok, Gateway} | {error, any()} when
       Gateway :: inet:ip_address().
 discover() ->
     IPs = case system_gateways() of
@@ -106,7 +106,7 @@ discover() ->
      discover_wait(Workers, Ref).
 
 discover_wait([], _Ref) ->
-    no_nat;
+    {error, no_nat};
 discover_wait(Workers, Ref) ->
     receive
         {nat, Ref, WorkerPid, GatewayIp} ->
