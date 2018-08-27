@@ -131,8 +131,6 @@ add_port_mapping(Context, Protocol, InternalPort, ExternalPort) ->
                        Protocol:: nat:nat_protocol(), InternalPort :: integer(),
                        ExternalPort :: integer(),
                        Lifetime :: integer()) -> ok | {error, term()}.
-add_port_mapping(Ctx, Protocol, InternalPort, ExternalPort, 0) ->
-    add_port_mapping(Ctx, Protocol, InternalPort, ExternalPort, 604800);
 add_port_mapping(Ctx, Protocol0, InternalPort, ExternalPort, Lifetime) ->
     Protocol = protocol(Protocol0),
     case ExternalPort of
