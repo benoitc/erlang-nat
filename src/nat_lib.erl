@@ -7,11 +7,14 @@
 -module(nat_lib).
 -compile(nowarn_deprecated_function).
 
--export([soap_request/3]).
+-export([soap_request/3, soap_request/4]).
 -export([random_port/0]).
 -export([timestamp/0]).
 
 soap_request(Url, Function, Msg0) ->
+  soap_request(Url, Function, Msg0, []).
+
+soap_request(Url, Function, Msg0, Options) ->
     Msg =  "<?xml version=\"1.0\"?>"
            "<s:Envelope"
            " xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\""
@@ -31,7 +34,7 @@ soap_request(Url, Function, Msg0) ->
 
     Req = {Url, Headers, "text/xml; charset=\"utf-8\"", Msg},
 
-    case httpc:request(post, Req, [], []) of
+    case httpc:request(post, Req, [], Options) of
         {ok, {{_, 200, _}, _, Body}} ->
             {ok, Body};
         OK = {ok, {{_, Status, _}, _, _}} ->

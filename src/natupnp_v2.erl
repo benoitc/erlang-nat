@@ -172,9 +172,9 @@ add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}, Protocol, InternalPort,
     "</NewPortMappingDescription>"
     "<NewLeaseDuration>" ++ integer_to_list(Lifetime) ++
     "</NewLeaseDuration></u:AddPortMapping>",
-
+    {ok, IAddr} = inet:parse_address(Ip),
     Start = nat_lib:timestamp(),
-    case nat_lib:soap_request(Url, "AddAnyPortMapping", Msg) of
+    case nat_lib:soap_request(Url, "AddAnyPortMapping", Msg, [{socket_opts, [{ip, IAddr}]}]) of
         {ok, Body} ->
             {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
 
@@ -197,7 +197,7 @@ add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}, Protocol, InternalPort,
                           Protocol :: nat:nat_protocol(), InternalPort :: integer(),
                           ExternalPort :: integer())
 -> ok | {error, term()}.
-delete_port_mapping(#nat_upnp{service_url=Url}, Protocol0, _InternalPort, ExternalPort) ->
+delete_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, _InternalPort, ExternalPort) ->
     Protocol = protocol(Protocol0),
     Msg = "<u:DeletePortMapping xmlns:u=\""
     "urn:schemas-upnp-org:service:WANIPConnection:1\">"
@@ -206,8 +206,8 @@ delete_port_mapping(#nat_upnp{service_url=Url}, Protocol0, _InternalPort, Extern
     "</NewExternalPort>"
     "<NewProtocol>" ++ Protocol ++ "</NewProtocol>"
     "</u:DeletePortMapping>",
-
-    case nat_lib:soap_request(Url, "DeletePortMapping", Msg) of
+    {ok, IAddr} = inet:parse_address(Ip),
+    case nat_lib:soap_request(Url, "DeletePortMapping", Msg, [{socket_opts, [{ip, IAddr}]}]) of
         {ok, _} -> ok;
         Error -> Error
     end.
