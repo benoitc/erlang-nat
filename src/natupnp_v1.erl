@@ -16,6 +16,7 @@
 -export([get_internal_address/1]).
 -export([add_port_mapping/4, add_port_mapping/5]).
 -export([delete_port_mapping/4]).
+-export([get_port_mapping/3]).
 -export([status_info/1]).
 
 -include("nat.hrl").
@@ -189,6 +190,44 @@ delete_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, _InternalPort,
     case nat_lib:soap_request(Url, "DeletePortMapping", Msg, [{socket_opts, [{ip, IAddr}]}]) of
         {ok, _} -> ok;
         Error -> Error
+    end.
+
+%% @doc get specific port mapping for a well known port and protocol
+-spec get_port_mapping(Context :: nat:nat_upnp(),
+                       Protocol :: nat:nat_protocol(),
+                       ExternalPort :: integer())
+-> {ok, InternalPort :: integer(), InternalAddress :: string()} | {error, any()}.
+get_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, ExternalPort) ->
+   Protocol = protocol(Protocol0),
+    Msg = "<u:GetSpecificPortMappingEntry xmlns:u=\""
+    "urn:schemas-upnp-org:service:WANIPConnection:1\">"
+    "<NewRemoteHost></NewRemoteHost>"
+    "<NewExternalPort>" ++ integer_to_list(ExternalPort) ++
+    "</NewExternalPort>"
+    "<NewProtocol>" ++ Protocol ++ "</NewProtocol>"
+    "</u:GetSpecificPortMappingEntry>",
+    {ok, IAddr} = inet:parse_address(Ip),
+    case nat_lib:soap_request(Url, "GetSpecificPortMappingEntry", Msg, [{socket_opts, [{ip, IAddr}]}]) of
+        {ok, Body} ->
+            {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
+            [Infos | _] = xmerl_xpath:string("//s:Envelope/s:Body/"
+                                             "u:GetSpecificPortMappingEntryResponse", Xml),
+            NewInternalPort =
+            extract_txt(
+              xmerl_xpath:string("NewInternalPort/text()",
+                                 Infos)
+             ),
+
+            NewInternalClient =
+            extract_txt(
+              xmerl_xpath:string("NewInternalClient/text()",
+                                 Infos)
+             ),
+
+            {IPort, _ } = string:to_integer(NewInternalPort),
+            {ok, IPort, NewInternalClient};
+        Error ->
+            Error
     end.
 
 
