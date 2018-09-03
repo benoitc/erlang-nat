@@ -67,12 +67,8 @@ natupnp_v1() ->
 
             case natupnp_v1:get_internal_address(Context) of
                 {ok, IntAddress} ->
-                    ?LOG("[natupnp_v1] got internal address ~p", [IntAddress]);
-                {error, R3} ->
-                    ?LOG("[natupnp_v1] failed to get internal address ~p", [R3])
+                    ?LOG("[natupnp_v1] got internal address ~p", [IntAddress])
             end;
-        timeout ->
-            ?LOG("[natupnp_v1] failed to discover timeout", []);
         {error, _Reason} ->
             ?LOG("[natupnp_v1] failed to discover ~p", [_Reason])
     end.
@@ -105,12 +101,8 @@ natupnp_v2() ->
 
             case natupnp_v2:get_internal_address(Context) of
                 {ok, IntAddress} ->
-                    ?LOG("[natupnp_v2] got internal address ~p", [IntAddress]);
-                {error, R3} ->
-                    ?LOG("[natupnp_v2] failed to get internal address ~p", [R3])
+                    ?LOG("[natupnp_v2] got internal address ~p", [IntAddress])
             end;
-        timeout ->
-            ?LOG("[natupnp_v2] failed to discover timeout", []);
         {error, _Reason} ->
             ?LOG("[natupnp_v2] failed to discover ~p", [_Reason])
     end.
@@ -143,12 +135,8 @@ natpmp() ->
 
             case natpmp:get_internal_address(Context) of
                 {ok, IntAddress} ->
-                    ?LOG("[natpmp] got internal address ~p", [IntAddress]);
-                {error, R3} ->
-                    ?LOG("[natpmp] failed to get internal address ~p", [R3])
+                    ?LOG("[natpmp] got internal address ~p", [IntAddress])
             end;
-        no_nat ->
-            ?LOG("[natpmp] failed to discover not nat", []);
-        {error, _Reason} ->
-            ?LOG("[natpmp] failed to discover ~p", [_Reason])
+        {error, no_nat} ->
+            ?LOG("[natpmp] failed to discover not nat", [])
     end.
