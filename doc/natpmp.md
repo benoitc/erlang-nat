@@ -72,10 +72,10 @@ delete a port mapping
 ### discover/0 ###
 
 <pre><code>
-discover() -&gt; {ok, Gateway} | {error, Reason}
+discover() -&gt; {ok, Gateway} | {error, any()}
 </code></pre>
 
-<ul class="definitions"><li><code>Gateway = <a href="inet.md#type-ip_address">inet:ip_address()</a></code></li><li><code>Reason = any()</code></li></ul>
+<ul class="definitions"><li><code>Gateway = <a href="inet.md#type-ip_address">inet:ip_address()</a></code></li></ul>
 
 discover a Nat gateway
 
@@ -106,10 +106,10 @@ get external ip
 ### get_internal_address/1 ###
 
 <pre><code>
-get_internal_address(Gateway) -&gt; {ok, InternalIp} | {error, Reason}
+get_internal_address(Gateway) -&gt; {ok, InternalIp}
 </code></pre>
 
-<ul class="definitions"><li><code>Gateway = <a href="inet.md#type-ip_address">inet:ip_address()</a> | <a href="inet.md#type-hostname">inet:hostname()</a></code></li><li><code>InternalIp = <a href="inet.md#type-ip_address">inet:ip_address()</a> | <a href="inet.md#type-hostname">inet:hostname()</a></code></li><li><code>Reason = any()</code></li></ul>
+<ul class="definitions"><li><code>Gateway = <a href="inet.md#type-ip_address">inet:ip_address()</a> | <a href="inet.md#type-hostname">inet:hostname()</a></code></li><li><code>InternalIp = <a href="inet.md#type-ip_address">inet:ip_address()</a> | <a href="inet.md#type-hostname">inet:hostname()</a></code></li></ul>
 
 get internal address used for this gateway
 

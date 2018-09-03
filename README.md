@@ -4,7 +4,7 @@
 
 Copyright (c) 2016-2018 Benoît Chesneau.
 
-__Version:__ 0.2.0
+__Version:__ 0.3.0
 
 # nat
 
