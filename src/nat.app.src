@@ -1,6 +1,6 @@
 {application, nat, [
 	{description, "implements NAT handling facilities"},
-	{vsn, "0.3.0"},
+	{vsn, "0.3.1"},
 	{modules, []},
 	{registered, []},
 	{applications, [kernel,stdlib,inet_cidr,inet_ext,inets,xmerl,rand_compat]},
