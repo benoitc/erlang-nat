@@ -3,7 +3,7 @@
 	{vsn, "0.3.0"},
 	{modules, []},
 	{registered, []},
-	{applications, [kernel,stdlib,inet_cidr,inet_ext]},
+	{applications, [kernel,stdlib,inet_cidr,inet_ext,inets,xmerl,rand_compat]},
   {maintainers, ["Benoit Chesneau"]},
   {licenses, ["MIT"]},
   {links, [{"Github", "https://github.com/benoitc/erlang-nat"}]},
