@@ -23,7 +23,7 @@ Currently supported protocols:
 
 ### Discover the NAT gateway:
 
-You shoiuld start by discovering the NAT gateway if it exists:
+You should start by discovering the NAT gateway if it exists:
 
 ```
 1> {ok, Ctx} = nat:discover().
