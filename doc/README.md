@@ -19,7 +19,7 @@ Currently supported protocols:
 
 ### Discover the NAT gateway:
 
-You shoiuld start by discovering the NAT gateway if it exists:
+You should start by discovering the NAT gateway if it exists:
 
 ```
 1> {ok, Ctx} = nat:discover().
@@ -74,9 +74,9 @@ For issues, comments or feedback please create an [issue](https://github.com/ben
 
 
 <table width="100%" border="0" summary="list of modules">
-<tr><td><a href="nat.md" class="module">nat</a></td></tr>
-<tr><td><a href="nat_lib.md" class="module">nat_lib</a></td></tr>
-<tr><td><a href="natpmp.md" class="module">natpmp</a></td></tr>
-<tr><td><a href="natupnp_v1.md" class="module">natupnp_v1</a></td></tr>
-<tr><td><a href="natupnp_v2.md" class="module">natupnp_v2</a></td></tr></table>
+<tr><td><a href="https://github.com/benoitc/erlang-nat/blob/master/doc/nat.md" class="module">nat</a></td></tr>
+<tr><td><a href="https://github.com/benoitc/erlang-nat/blob/master/doc/nat_lib.md" class="module">nat_lib</a></td></tr>
+<tr><td><a href="https://github.com/benoitc/erlang-nat/blob/master/doc/natpmp.md" class="module">natpmp</a></td></tr>
+<tr><td><a href="https://github.com/benoitc/erlang-nat/blob/master/doc/natupnp_v1.md" class="module">natupnp_v1</a></td></tr>
+<tr><td><a href="https://github.com/benoitc/erlang-nat/blob/master/doc/natupnp_v2.md" class="module">natupnp_v2</a></td></tr></table>
 
