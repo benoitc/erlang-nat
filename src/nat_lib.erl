@@ -32,12 +32,12 @@ soap_request(Url, Function, Msg0, Options) ->
                {"Cache-Control", "no-cache"},
                {"Pragma", "no-cache"}],
 
-    case lhttpc:request(Url, post, Headers, Msg, 5000, Options)of
-        {ok, {{_, 200, _}, _, Body}} ->
+    case lhttpc:request(Url, post, Headers, Msg, 5000, Options) of
+        {ok, {{200, _}, _, Body}} ->
             {ok, binary_to_list(Body)};
-        OK = {ok, {{_, Status, _}, _, Body}} ->
+        OK = {ok, {{Status, _}, _, Body}} ->
             error_logger:info_msg("UPNP SOAP error: ~p~n", [OK]),
-            {error, {http_error, integer_to_list(Status), Body}};
+            {error, {http_error, integer_to_list(Status), binary_to_list(Body)}};
         Error ->
             Error
     end.
