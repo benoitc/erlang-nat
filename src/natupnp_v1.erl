@@ -166,7 +166,7 @@ add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}=NatCtx,
     "</NewLeaseDuration></u:AddPortMapping>",
     {ok, IAddr} = inet:parse_address(Ip),
     Start = nat_lib:timestamp(),
-    case nat_lib:soap_request(Url, "AddPortMapping", Msg, [{socket_opts, [{ip, IAddr}]}]) of
+    case nat_lib:soap_request(Url, "AddPortMapping", Msg, [{connect_options, [{ip, IAddr}]}]) of
         {ok, _} ->
             Now = nat_lib:timestamp(),
             MappingLifetime = if
@@ -219,7 +219,7 @@ delete_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, _InternalPort,
     "<NewProtocol>" ++ Protocol ++ "</NewProtocol>"
     "</u:DeletePortMapping>",
     {ok, IAddr} = inet:parse_address(Ip),
-    case nat_lib:soap_request(Url, "DeletePortMapping", Msg, [{socket_opts, [{ip, IAddr}]}]) of
+    case nat_lib:soap_request(Url, "DeletePortMapping", Msg, [{connect_options, [{ip, IAddr}]}]) of
         {ok, _} -> ok;
         Error -> Error
     end.
@@ -239,7 +239,7 @@ get_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, ExternalPort) ->
     "<NewProtocol>" ++ Protocol ++ "</NewProtocol>"
     "</u:GetSpecificPortMappingEntry>",
     {ok, IAddr} = inet:parse_address(Ip),
-    case nat_lib:soap_request(Url, "GetSpecificPortMappingEntry", Msg, [{socket_opts, [{ip, IAddr}]}]) of
+    case nat_lib:soap_request(Url, "GetSpecificPortMappingEntry", Msg, [{connect_options, [{ip, IAddr}]}]) of
         {ok, Body} ->
             {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
             [Infos | _] = xmerl_xpath:string("//s:Envelope/s:Body/"
@@ -313,9 +313,9 @@ get_location(Raw) ->
     end.
 
 get_service_url(RootUrl) ->
-    case httpc:request(RootUrl) of
-        {ok, {{_, 200, _}, _, Body}} ->
-            {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
+    case lhttpc:request(RootUrl, get, [], 5000) of
+        {ok, {{200, _}, _, Body}} ->
+            {Xml, _} = xmerl_scan:string(binary_to_list(Body), [{space, normalize}]),
             [Device | _] = xmerl_xpath:string("//device", Xml),
             case device_type(Device) of
                 "urn:schemas-upnp-org:device:InternetGatewayDevice:1" ->
@@ -323,7 +323,7 @@ get_service_url(RootUrl) ->
                 _ ->
                     {error,  no_gateway_device}
             end;
-        {ok, {{_, StatusCode, _}, _, _}} ->
+        {ok, {{StatusCode, _}, _, _}} ->
             {error, integer_to_list(StatusCode)};
         Error ->
             Error

@@ -24,19 +24,17 @@ soap_request(Url, Function, Msg0, Options) ->
     Action = "\"urn:schemas-upnp-org:service:WANIPConnection:1#"
              ++ Function ++ "\"",
 
-    Headers = [{"Content-Length", integer_to_list(length(Msg))},
+    Headers = [{"Content-Type", "text/xml; charset=\"utf-8\""},
+               {"Content-Length", integer_to_list(length(Msg))},
                {"User-Agent", "Darwin/10.0.0, UPnP/1.0, MiniUPnPc/1.3"},
                {"SOAPAction", Action},
                {"Connection", "close"},
                {"Cache-Control", "no-cache"},
                {"Pragma", "no-cache"}],
 
-
-    Req = {Url, Headers, "text/xml; charset=\"utf-8\"", Msg},
-
-    case httpc:request(post, Req, [], Options) of
+    case lhttpc:request(Url, post, Headers, Msg, 5000, Options)of
         {ok, {{_, 200, _}, _, Body}} ->
-            {ok, Body};
+            {ok, binary_to_list(Body)};
         OK = {ok, {{_, Status, _}, _, Body}} ->
             error_logger:info_msg("UPNP SOAP error: ~p~n", [OK]),
             {error, {http_error, integer_to_list(Status), Body}};
