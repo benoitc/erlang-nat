@@ -147,7 +147,8 @@ random_port_mapping(Ctx, Protocol, InternalPort, Lifetime, _LastError, Tries) ->
 
 
 add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}=NatCtx,
-                  Protocol, InternalPort, ExternalPort, Lifetime) ->
+                  Protocol, InternalPort, ExternalPort,
+                  Lifetime) when is_integer(Lifetime), Lifetime >= 0 ->
     Description = Ip ++ "_" ++ Protocol ++ "_" ++ integer_to_list(InternalPort),
     Msg = "<u:AddPortMapping xmlns:u=\""
     "urn:schemas-upnp-org:service:WANIPConnection:1\">"
@@ -168,7 +169,12 @@ add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}=NatCtx,
     case nat_lib:soap_request(Url, "AddPortMapping", Msg, [{socket_opts, [{ip, IAddr}]}]) of
         {ok, _} ->
             Now = nat_lib:timestamp(),
-            MappingLifetime = Lifetime - (Now - Start),
+            MappingLifetime = if
+                                Lifetime > 0 ->
+                                  Lifetime - (Now - Start);
+                                true ->
+                                  infinity
+                              end,
             {ok, Now, InternalPort, ExternalPort, MappingLifetime};
         Error when Lifetime > 0 ->
             %% Try to repair error code 725 - OnlyPermanentLeasesSupported

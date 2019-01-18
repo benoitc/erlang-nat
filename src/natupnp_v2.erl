@@ -152,7 +152,8 @@ random_port_mapping(Ctx, Protocol, InternalPort, Lifetime, _LastError, Tries) ->
     end.
 
 add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url} = NatCtx,
-                  Protocol, InternalPort, ExternalPort, Lifetime) ->
+                  Protocol, InternalPort, ExternalPort,
+                  Lifetime) when is_integer(Lifetime), Lifetime >= 0 ->
     Description = Ip ++ "_" ++ Protocol ++ "_" ++ integer_to_list(InternalPort),
     Msg = "<u:AddAnyPortMapping xmlns:u=\""
     "urn:schemas-upnp-org:service:WANIPConnection:2\">"
