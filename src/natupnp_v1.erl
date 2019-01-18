@@ -171,6 +171,7 @@ add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}=NatCtx,
             MappingLifetime = Lifetime - (Now - Start),
             {ok, Now, InternalPort, ExternalPort, MappingLifetime};
         Error when Lifetime > 0 ->
+            %% Try to repair error code 725 - OnlyPermanentLeasesSupported
             case only_permanent_lease_supported(Error) of
                 true ->
                     error_logger:info_msg("UPNP: only permanent lease supported~n", []),
