@@ -183,9 +183,9 @@ add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}=NatCtx,
             Error
     end.
 
-only_permanent_lease_supported({error, {http_error, 500, Body}}) ->
+only_permanent_lease_supported({error, {http_error, "500", Body}}) ->
   {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
-  [Error | _] = xmerl_xpath:string("//s:Envelope/s:Body/s:Fault/detail"
+  [Error | _] = xmerl_xpath:string("//s:Envelope/s:Body/s:Fault/detail/"
                                    "UPnPError", Xml),
   ErrorCode = extract_txt(
                 xmerl_xpath:string("errorCode/text()", Error)
@@ -194,7 +194,9 @@ only_permanent_lease_supported({error, {http_error, 500, Body}}) ->
   case ErrorCode of
     "725" -> true;
     _ -> false
-  end.
+  end;
+only_permanent_lease_supported(_) ->
+  false.
 
 %% @doc Delete a port mapping from the router
 -spec delete_port_mapping(Context :: nat:nat_upnp(),
