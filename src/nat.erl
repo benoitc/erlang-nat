@@ -85,7 +85,7 @@ get_internal_address({Mod, Ctx}) ->
       ExternalPortRequest :: non_neg_integer(),
       Since :: non_neg_integer(),
       ExternalPort :: non_neg_integer(),
-      MappingLifetime :: non_neg_integer(),
+      MappingLifetime :: non_neg_integer() | infinity,
       Reason :: any() | timeout.
 %% @doc add a port mapping with default lifetime
 add_port_mapping(NatCtx, Protocol, InternalPort, ExternalPort) ->
@@ -102,7 +102,7 @@ add_port_mapping(NatCtx, Protocol, InternalPort, ExternalPort) ->
       Lifetime :: non_neg_integer(),
       Since :: non_neg_integer(),
       ExternalPort :: non_neg_integer(),
-      MappingLifetime :: non_neg_integer(),
+      MappingLifetime :: non_neg_integer() | infinity,
       Reason :: any() | timeout().
 %% @doc add a port mapping
 add_port_mapping({Mod, Ctx}, Protocol, InternalPort, ExternalPort, Lifetime) ->

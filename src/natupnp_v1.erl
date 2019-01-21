@@ -145,8 +145,10 @@ random_port_mapping(Ctx, Protocol, InternalPort, Lifetime, _LastError, Tries) ->
                                 Tries -1)
     end.
 
-add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}, Protocol, InternalPort,
-                 ExternalPort, Lifetime) ->
+
+add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}=NatCtx,
+                  Protocol, InternalPort, ExternalPort,
+                  Lifetime) when is_integer(Lifetime), Lifetime >= 0 ->
     Description = Ip ++ "_" ++ Protocol ++ "_" ++ integer_to_list(InternalPort),
     Msg = "<u:AddPortMapping xmlns:u=\""
     "urn:schemas-upnp-org:service:WANIPConnection:1\">"
@@ -167,10 +169,40 @@ add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}, Protocol, InternalPort,
     case nat_lib:soap_request(Url, "AddPortMapping", Msg, [{socket_opts, [{ip, IAddr}]}]) of
         {ok, _} ->
             Now = nat_lib:timestamp(),
-            MappingLifetime = Lifetime - (Now - Start),
+            MappingLifetime = if
+                                Lifetime > 0 ->
+                                  Lifetime - (Now - Start);
+                                true ->
+                                  infinity
+                              end,
             {ok, Now, InternalPort, ExternalPort, MappingLifetime};
-        Error -> Error
+        Error when Lifetime > 0 ->
+            %% Try to repair error code 725 - OnlyPermanentLeasesSupported
+            case only_permanent_lease_supported(Error) of
+                true ->
+                    error_logger:info_msg("UPNP: only permanent lease supported~n", []),
+                    add_port_mapping1(NatCtx, Protocol, InternalPort, ExternalPort, 0);
+                false ->
+                    Error
+              end;
+        Error ->
+            Error
     end.
+
+only_permanent_lease_supported({error, {http_error, "500", Body}}) ->
+  {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
+  [Error | _] = xmerl_xpath:string("//s:Envelope/s:Body/s:Fault/detail/"
+                                   "UPnPError", Xml),
+  ErrorCode = extract_txt(
+                xmerl_xpath:string("errorCode/text()", Error)
+               ),
+
+  case ErrorCode of
+    "725" -> true;
+    _ -> false
+  end;
+only_permanent_lease_supported(_) ->
+  false.
 
 %% @doc Delete a port mapping from the router
 -spec delete_port_mapping(Context :: nat:nat_upnp(),

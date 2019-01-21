@@ -37,9 +37,9 @@ soap_request(Url, Function, Msg0, Options) ->
     case httpc:request(post, Req, [], Options) of
         {ok, {{_, 200, _}, _, Body}} ->
             {ok, Body};
-        OK = {ok, {{_, Status, _}, _, _}} ->
+        OK = {ok, {{_, Status, _}, _, Body}} ->
             error_logger:info_msg("UPNP SOAP error: ~p~n", [OK]),
-            {error, integer_to_list(Status)};
+            {error, {http_error, integer_to_list(Status), Body}};
         Error ->
             Error
     end.
