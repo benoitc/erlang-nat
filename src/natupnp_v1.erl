@@ -10,26 +10,22 @@
 
 -module(natupnp_v1).
 
--export([discover/0]).
+-export([discover/1]).
 -export([get_device_address/1]).
--export([get_external_address/1]).
+-export([get_external_address/2]).
 -export([get_internal_address/1]).
--export([add_port_mapping/4, add_port_mapping/5]).
--export([delete_port_mapping/4]).
--export([get_port_mapping/3]).
--export([status_info/1]).
+-export([add_port_mapping/6]).
+-export([delete_port_mapping/5]).
+-export([get_port_mapping/4]).
+-export([status_info/2]).
 
 -include("nat.hrl").
 -include_lib("xmerl/include/xmerl.hrl").
 
 %% @doc discover the gateway and our IP to associate
--spec discover() -> {ok, Context:: nat:nat_upnp()}
+-spec discover(HttpcProfile :: pid()) -> {ok, Context:: nat:nat_upnp()}
                     | {error, term()}.
-discover() ->
-    _ = application:start(inets),
-    _ = rand_compat:seed(erlang:phash2([node()]),
-                         erlang:monotonic_time(),
-                         erlang:unique_integer()),
+discover(HttpcProfile) ->
     {ok, Sock} = gen_udp:open(0, [{active, once}, inet, binary]),
 
     ST = <<"urn:schemas-upnp-org:device:InternetGatewayDevice:1" >>,
@@ -42,15 +38,15 @@ discover() ->
                                   "\r\n\r\n">>],
 
     try
-        discover1(Sock, iolist_to_binary(MSearch), 3)
+        discover1(Sock, iolist_to_binary(MSearch), HttpcProfile, 3)
     after
         gen_udp:close(Sock)
     end.
 
 
-discover1(_Sock, _MSearch, ?NAT_TRIES) ->
+discover1(_Sock, _MSearch, _HttpcProfile, ?NAT_TRIES) ->
     {error, timeout};
-discover1(Sock, MSearch, Tries) ->
+discover1(Sock, MSearch, HttpcProfile, Tries) ->
     inet:setopts(Sock, [{active, once}]),
     Timeout = ?NAT_INITIAL_MS bsl Tries,
     ok = gen_udp:send(Sock, "239.255.255.250", 1900, MSearch),
@@ -58,9 +54,9 @@ discover1(Sock, MSearch, Tries) ->
         {udp, _Sock, Ip, _Port, Packet} ->
             case get_location(Packet) of
                 error ->
-                    discover1(Sock, MSearch, Tries-1);
+                    discover1(Sock, MSearch, HttpcProfile, Tries-1);
                 Location ->
-                    case get_service_url(binary_to_list(Location)) of
+                    case get_service_url(binary_to_list(Location), HttpcProfile) of
                         {ok, Url} ->
                             MyIp = inet_ext:get_internal_address(Ip),
                             {ok, #nat_upnp{service_url=Url, ip=MyIp}};
@@ -69,7 +65,7 @@ discover1(Sock, MSearch, Tries) ->
                     end
             end
     after Timeout ->
-              discover1(Sock, MSearch, Tries+1)
+              discover1(Sock, MSearch, HttpcProfile, Tries+1)
     end.
 
 
@@ -88,11 +84,11 @@ get_device_address(#nat_upnp{service_url=Url}) ->
     end.
 
 
-get_external_address(#nat_upnp{service_url=Url}) ->
+get_external_address(#nat_upnp{service_url=Url}, HttpcProfile) ->
     Message = "<u:GetExternalIPAddress xmlns:u=\""
     "urn:schemas-upnp-org:service:WANIPConnection:1\">"
     "</u:GetExternalIPAddress>",
-    case nat_lib:soap_request(Url, "GetExternalIPAddress", Message) of
+    case nat_lib:soap_request(Url, "GetExternalIPAddress", Message, HttpcProfile) of
         {ok, Body} ->
             {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
 
@@ -112,43 +108,35 @@ get_external_address(#nat_upnp{service_url=Url}) ->
 get_internal_address(#nat_upnp{ip=Ip}) ->
     {ok, Ip}.
 
-
-%% @doc Add a port mapping with default lifetime to 0 seconds
--spec add_port_mapping(nat:nat_upnp(), nat:nat_protocol(), integer(), integer()) ->
-    {ok, non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()} | {error, any()}.
-add_port_mapping(Context, Protocol, InternalPort, ExternalPort) ->
-    add_port_mapping(Context, Protocol, InternalPort, ExternalPort,
-                     ?RECOMMENDED_MAPPING_LIFETIME_SECONDS).
-
 %% @doc Add a port mapping and release after Timeout
--spec add_port_mapping(nat:nat_upnp(), nat:nat_protocol(),integer(), integer(), integer()) ->
+-spec add_port_mapping(nat:nat_upnp(), nat:nat_protocol(),integer(), integer(), integer(), pid()) ->
     {ok, non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()} | {error, any()}.
-add_port_mapping(Ctx, Protocol0, InternalPort, ExternalPort, Lifetime) ->
+add_port_mapping(Ctx, Protocol0, InternalPort, ExternalPort, Lifetime, HttpcProfile) ->
     Protocol = protocol(Protocol0),
     case ExternalPort of
         0 ->
-            random_port_mapping(Ctx, Protocol, InternalPort, Lifetime, nil, 3);
+            random_port_mapping(Ctx, Protocol, InternalPort, Lifetime, nil, HttpcProfile, 3);
         _ ->
-            add_port_mapping1(Ctx,Protocol, InternalPort, ExternalPort, Lifetime)
+            add_port_mapping1(Ctx,Protocol, InternalPort, ExternalPort, Lifetime, HttpcProfile)
     end.
 
-random_port_mapping(_Ctx, _Protocol, _InternalPort, _Lifetime, Error, 0) ->
+random_port_mapping(_Ctx, _Protocol, _InternalPort, _Lifetime, Error, _HttpcProfile, 0) ->
     Error;
-random_port_mapping(Ctx, Protocol, InternalPort, Lifetime, _LastError, Tries) ->
+random_port_mapping(Ctx, Protocol, InternalPort, Lifetime, _LastError, HttpcProfile, Tries) ->
     ExternalPort = nat_lib:random_port(),
-    Res = add_port_mapping1(Ctx, Protocol, InternalPort, ExternalPort, Lifetime),
+    Res = add_port_mapping1(Ctx, Protocol, InternalPort, ExternalPort, Lifetime, HttpcProfile),
     case Res of
         {ok, _, _, _, _} ->
             Res;
         Error ->
-            random_port_mapping(Ctx, Protocol, InternalPort, Lifetime, Error,
+            random_port_mapping(Ctx, Protocol, InternalPort, Lifetime, Error, HttpcProfile,
                                 Tries -1)
     end.
 
 
 add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}=NatCtx,
                   Protocol, InternalPort, ExternalPort,
-                  Lifetime) when is_integer(Lifetime), Lifetime >= 0 ->
+                  Lifetime, HttpcProfile) when is_integer(Lifetime), Lifetime >= 0 ->
     Description = Ip ++ "_" ++ Protocol ++ "_" ++ integer_to_list(InternalPort),
     Msg = "<u:AddPortMapping xmlns:u=\""
     "urn:schemas-upnp-org:service:WANIPConnection:1\">"
@@ -166,7 +154,8 @@ add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}=NatCtx,
     "</NewLeaseDuration></u:AddPortMapping>",
     {ok, IAddr} = inet:parse_address(Ip),
     Start = nat_lib:timestamp(),
-    case nat_lib:soap_request(Url, "AddPortMapping", Msg, [{socket_opts, [{ip, IAddr}]}]) of
+    ok = httpc:set_option(socket_opts, [{ip, IAddr}], HttpcProfile),
+    case nat_lib:soap_request(Url, "AddPortMapping", Msg, [], HttpcProfile) of
         {ok, _} ->
             Now = nat_lib:timestamp(),
             MappingLifetime = if
@@ -181,7 +170,7 @@ add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url}=NatCtx,
             case only_permanent_lease_supported(Error) of
                 true ->
                     error_logger:info_msg("UPNP: only permanent lease supported~n", []),
-                    add_port_mapping1(NatCtx, Protocol, InternalPort, ExternalPort, 0);
+                    add_port_mapping1(NatCtx, Protocol, InternalPort, ExternalPort, 0, HttpcProfile);
                 false ->
                     Error
               end;
@@ -207,9 +196,9 @@ only_permanent_lease_supported(_) ->
 %% @doc Delete a port mapping from the router
 -spec delete_port_mapping(Context :: nat:nat_upnp(),
                           Protocol :: nat:nat_protocol(), InternalPort :: integer(),
-                          ExternalPort :: integer())
+                          ExternalPort :: integer(), HttpcProfile :: pid())
 -> ok | {error, term()}.
-delete_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, _InternalPort, ExternalPort) ->
+delete_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, _InternalPort, ExternalPort, HttpcProfile) ->
     Protocol = protocol(Protocol0),
     Msg = "<u:DeletePortMapping xmlns:u=\""
     "urn:schemas-upnp-org:service:WANIPConnection:1\">"
@@ -219,7 +208,8 @@ delete_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, _InternalPort,
     "<NewProtocol>" ++ Protocol ++ "</NewProtocol>"
     "</u:DeletePortMapping>",
     {ok, IAddr} = inet:parse_address(Ip),
-    case nat_lib:soap_request(Url, "DeletePortMapping", Msg, [{socket_opts, [{ip, IAddr}]}]) of
+    ok = httpc:set_option(socket_opts, [{ip, IAddr}], HttpcProfile),
+    case nat_lib:soap_request(Url, "DeletePortMapping", Msg, [], HttpcProfile) of
         {ok, _} -> ok;
         Error -> Error
     end.
@@ -227,9 +217,10 @@ delete_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, _InternalPort,
 %% @doc get specific port mapping for a well known port and protocol
 -spec get_port_mapping(Context :: nat:nat_upnp(),
                        Protocol :: nat:nat_protocol(),
-                       ExternalPort :: integer())
+                       ExternalPort :: integer(),
+                       HttpcProfile :: pid())
 -> {ok, InternalPort :: integer(), InternalAddress :: string()} | {error, any()}.
-get_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, ExternalPort) ->
+get_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, ExternalPort, HttpcProfile) ->
    Protocol = protocol(Protocol0),
     Msg = "<u:GetSpecificPortMappingEntry xmlns:u=\""
     "urn:schemas-upnp-org:service:WANIPConnection:1\">"
@@ -239,7 +230,8 @@ get_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, ExternalPort) ->
     "<NewProtocol>" ++ Protocol ++ "</NewProtocol>"
     "</u:GetSpecificPortMappingEntry>",
     {ok, IAddr} = inet:parse_address(Ip),
-    case nat_lib:soap_request(Url, "GetSpecificPortMappingEntry", Msg, [{socket_opts, [{ip, IAddr}]}]) of
+    ok = httpc:set_option(socket_opts, [{ip, IAddr}], HttpcProfile),
+    case nat_lib:soap_request(Url, "GetSpecificPortMappingEntry", Msg, [], HttpcProfile) of
         {ok, Body} ->
             {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
             [Infos | _] = xmerl_xpath:string("//s:Envelope/s:Body/"
@@ -264,14 +256,14 @@ get_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, ExternalPort) ->
 
 
 %% @doc get router status
--spec status_info(Context :: nat:nat_upnp())
+-spec status_info(Context :: nat:nat_upnp(), HttpcProfile :: pid())
 -> {Status::string(), LastConnectionError::string(), Uptime::string()}
    | {error, term()}.
-status_info(#nat_upnp{service_url=Url}) ->
+status_info(#nat_upnp{service_url=Url}, HttpcProfile) ->
     Message = "<u:GetStatusInfo xmlns:u=\""
     "urn:schemas-upnp-org:service:WANIPConnection:1\">"
     "</u:GetStatusInfo>",
-    case nat_lib:soap_request(Url, "GetStatusInfo", Message) of
+    case nat_lib:soap_request(Url, "GetStatusInfo", Message, HttpcProfile) of
         {ok, Body} ->
             {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
 
@@ -312,8 +304,8 @@ get_location(Raw) ->
             error
     end.
 
-get_service_url(RootUrl) ->
-    case httpc:request(RootUrl) of
+get_service_url(RootUrl, HttpcProfile) ->
+    case nat_lib:http_get(RootUrl, HttpcProfile) of
         {ok, {{_, 200, _}, _, Body}} ->
             {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
             [Device | _] = xmerl_xpath:string("//device", Xml),
