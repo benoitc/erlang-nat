@@ -7,11 +7,11 @@
 -module(natpmp).
 
 -export([get_device_address/1]).
--export([get_external_address/1]).
+-export([get_external_address/2]).
 -export([get_internal_address/1]).
--export([discover/0]).
--export([add_port_mapping/4, add_port_mapping/5]).
--export([delete_port_mapping/4]).
+-export([discover/1]).
+-export([add_port_mapping/6]).
+-export([delete_port_mapping/5]).
 
 -include("nat.hrl").
 
@@ -35,11 +35,12 @@ get_device_address(Gateway) ->
     {ok, Gateway}.
 
 %% @doc get external ip
--spec get_external_address(Gateway) -> {ok, ExternalIp} | {error, Reason} when
+-spec get_external_address(Gateway, HttpcProfile) -> {ok, ExternalIp} | {error, Reason} when
 	Gateway :: inet:ip_address() | inet:hostname(),
+    HttpcProfile :: pid(),
     ExternalIp :: inet:ip_address() | inet:hostname(),
     Reason :: natpmp_error().
-get_external_address(Gateway) ->
+get_external_address(Gateway, _HttpcProfile) ->
 	Msg = << 0, 0 >>,
 	nat_rpc(Gateway, Msg, 0).
 
@@ -50,8 +51,8 @@ get_external_address(Gateway) ->
 get_internal_address(Gateway) ->
     {ok, inet_ext:get_internal_address(Gateway)}.
 
-discover_with_addr(Parent, Ref, Addr) ->
-    case (catch natpmp:get_external_address(Addr)) of
+discover_with_addr(Parent, Ref, Addr, HttpcProfile) ->
+    case (catch natpmp:get_external_address(Addr, HttpcProfile)) of
         {ok, _Ip} ->
             Parent ! {nat, Ref, self(), Addr};
         _Else ->
@@ -84,9 +85,10 @@ system_gateways() ->
     [Ip || {_, Ip} <- inet_ext:gateways()].
 
 %% @doc discover a Nat gateway
--spec discover() -> {ok, Gateway} | {error, any()} when
+-spec discover(HttpcProfile) -> {ok, Gateway} | {error, any()} when
+      HttpcProfile :: pid(),
       Gateway :: inet:ip_address().
-discover() ->
+discover(HttpcProfile) ->
     IPs = case system_gateways() of
               [] ->  potential_gateways();
               Gateways -> Gateways
@@ -97,7 +99,7 @@ discover() ->
 
      Workers = lists:foldl(fun(Ip, Acc) ->
                                    Pid = spawn_link(fun() ->
-                                                            discover_with_addr(Self, Ref, Ip)
+                                                            discover_with_addr(Self, Ref, Ip, HttpcProfile)
                                                     end),
                                    erlang:monitor(process, Pid),
                                    [Pid | Acc]
@@ -123,25 +125,8 @@ discover_wait(Workers, Ref) ->
 
     end.
 
-
-%% @doc add a port mapping with default lifetime
--spec add_port_mapping(Gateway, Protocol, InternalPort, ExternalPortRequest) ->
-    {ok, Since, InternalPort, ExternalPort, MappingLifetime} | {error, Reason}
-      when
-      Gateway :: inet:ip_address() | inet:hostname(),
-      Protocol :: tcp | udp,
-      InternalPort :: non_neg_integer(),
-      ExternalPortRequest :: non_neg_integer(),
-      Since :: non_neg_integer(),
-      ExternalPort :: non_neg_integer(),
-      MappingLifetime :: non_neg_integer(),
-      Reason :: natpmp_error().
-add_port_mapping(Gateway, Protocol, InternalPort, ExternalPort) ->
-    add_port_mapping(Gateway, Protocol, InternalPort, ExternalPort,
-                     ?RECOMMENDED_MAPPING_LIFETIME_SECONDS).
-
 %% @doc add a port mapping
--spec add_port_mapping(Gateway, Protocol, InternalPort, ExternalPortRequest, Lifetime) ->
+-spec add_port_mapping(Gateway, Protocol, InternalPort, ExternalPortRequest, Lifetime, HttpcProfile) ->
     {ok, Since, InternalPort, ExternalPort, MappingLifetime} | {error, Reason}
       when
       Gateway :: inet:ip_address() | inet:hostname(),
@@ -149,11 +134,12 @@ add_port_mapping(Gateway, Protocol, InternalPort, ExternalPort) ->
       InternalPort :: non_neg_integer(),
       ExternalPortRequest :: non_neg_integer(),
       Lifetime :: non_neg_integer(),
+      HttpcProfile :: pid(),
       Since :: non_neg_integer(),
       ExternalPort :: non_neg_integer(),
       MappingLifetime :: non_neg_integer(),
       Reason :: natpmp_error().
-add_port_mapping(Gateway, Protocol, InternalPort, ExternalPort, Lifetime) ->
+add_port_mapping(Gateway, Protocol, InternalPort, ExternalPort, Lifetime, _HttpcProfile) ->
     OpCode = case Protocol of
                  udp -> 1;
                  tcp -> 2;
@@ -171,16 +157,17 @@ add_port_mapping(Gateway, Protocol, InternalPort, ExternalPort, Lifetime) ->
 
 
 %% @doc delete a port mapping
--spec delete_port_mapping(Gateway, Protocol, InternalPort, ExternalPortRequest) ->
+-spec delete_port_mapping(Gateway, Protocol, InternalPort, ExternalPortRequest, HttpcProfile) ->
     ok | {error, Reason}
       when
       Gateway :: inet:ip_address() | inet:hostname(),
       Protocol :: tcp | udp,
       InternalPort :: non_neg_integer(),
       ExternalPortRequest :: non_neg_integer(),
+      HttpcProfile :: pid(),
       Reason :: natpmp_error().
-delete_port_mapping(Gateway, Protocol, InternalPort, ExternalPort) ->
-	case add_port_mapping(Gateway, Protocol, InternalPort, ExternalPort, 0) of
+delete_port_mapping(Gateway, Protocol, InternalPort, ExternalPort, HttpcProfile) ->
+	case add_port_mapping(Gateway, Protocol, InternalPort, ExternalPort, 0, HttpcProfile) of
         {ok, _, InternalPort, 0, 0} -> ok;
         {ok, _, _, _, _} -> {error, bad_response};
         Error -> Error
@@ -194,7 +181,6 @@ delete_port_mapping(Gateway, Protocol, InternalPort, ExternalPort) ->
 %%
 
 nat_rpc(Gateway0, Msg, OpCode) ->
-	_ = application:start(inets),
     Gateway = inet_ext:parse_address(Gateway0),
     {ok, Sock} = gen_udp:open(0, [{active, once}, inet, binary]),
     try

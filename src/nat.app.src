@@ -3,6 +3,7 @@
 	{vsn, "0.3.1"},
 	{modules, []},
 	{registered, []},
+	{mod, {nat_app, []}},
 	{applications, [kernel,stdlib,inet_cidr,inet_ext,inets,xmerl,rand_compat]},
   {maintainers, ["Benoit Chesneau"]},
   {licenses, ["MIT"]},

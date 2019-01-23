@@ -7,14 +7,32 @@
 -module(nat_lib).
 -compile(nowarn_deprecated_function).
 
--export([soap_request/3, soap_request/4]).
+-export([http_get/2]).
+-export([http_request/5]).
+-export([soap_request/4, soap_request/5]).
 -export([random_port/0]).
 -export([timestamp/0]).
 
-soap_request(Url, Function, Msg0) ->
-  soap_request(Url, Function, Msg0, []).
+http_get(RootUrl, HttpcProfile) ->
+    http_request(get, {RootUrl, []}, [{timeout, 5000}], [], HttpcProfile).
 
-soap_request(Url, Function, Msg0, Options) ->
+http_post(Req, HttpOptions, HttpcProfile) ->
+    http_request(post, Req, [{timeout, 5000}], HttpOptions, HttpcProfile).
+
+http_request(Method, Req, ReqOptions, HttpOptions, HttpcProfile) ->
+    ReturnPid = self(),
+    Pid = proc_lib:spawn(fun() -> ReturnPid ! httpc:request(Method, Req, ReqOptions, HttpOptions, HttpcProfile) end),
+    receive
+        Response -> Response
+    after 7000 ->
+        exit(Pid, no_response_from_httpc_client),
+        {error, httpc_client_timeout}
+    end.
+
+soap_request(Url, Function, Msg0, HttpcProfile) ->
+  soap_request(Url, Function, Msg0, [], HttpcProfile).
+
+soap_request(Url, Function, Msg0, Options, HttpcProfile) ->
     Msg =  "<?xml version=\"1.0\"?>"
            "<s:Envelope"
            " xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\""
@@ -34,7 +52,7 @@ soap_request(Url, Function, Msg0, Options) ->
 
     Req = {Url, Headers, "text/xml; charset=\"utf-8\"", Msg},
 
-    case httpc:request(post, Req, [], Options) of
+    case http_post(Req, Options, HttpcProfile) of
         {ok, {{_, 200, _}, _, Body}} ->
             {ok, Body};
         OK = {ok, {{_, Status, _}, _, Body}} ->
