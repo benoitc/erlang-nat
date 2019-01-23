@@ -160,33 +160,36 @@ add_port_mapping1(#nat_upnp{ip=Ip, service_url=Url} = NatCtx,
     {ok, IAddr} = inet:parse_address(Ip),
     Start = nat_lib:timestamp(),
     ok = httpc:set_option(socket_opts, [{ip, IAddr}], HttpcProfile),
-    case nat_lib:soap_request(Url, "AddAnyPortMapping", Msg, [], HttpcProfile) of
-        {ok, Body} ->
-            {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
+    Result =
+        case nat_lib:soap_request(Url, "AddAnyPortMapping", Msg, [], HttpcProfile) of
+            {ok, Body} ->
+                {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
 
-            [Resp | _] = xmerl_xpath:string("//s:Envelope/s:Body/"
-                                             "u:AddAnyPortMappingResponse", Xml),
+                [Resp | _] = xmerl_xpath:string("//s:Envelope/s:Body/"
+                                                 "u:AddAnyPortMappingResponse", Xml),
 
-            ReservedPort = extract_txt(
-                       xmerl_xpath:string("NewReservedPort/text()",
-                                          Resp)
-                      ),
+                ReservedPort = extract_txt(
+                           xmerl_xpath:string("NewReservedPort/text()",
+                                              Resp)
+                          ),
 
-            Now = nat_lib:timestamp(),
-            MappingLifetime = Lifetime - (Now - Start),
-            {ok, Now, InternalPort, list_to_integer(ReservedPort), MappingLifetime};
-         Error when Lifetime > 0 ->
-            %% Try to repair error code 725 - OnlyPermanentLeasesSupported
-            case only_permanent_lease_supported(Error) of
-                true ->
-                    error_logger:info_msg("UPNP: only permanent lease supported~n", []),
-                    add_port_mapping1(NatCtx, Protocol, InternalPort, ExternalPort, 0, HttpcProfile);
-                false ->
-                    Error
-              end;
-        Error ->
-            Error
-    end.
+                Now = nat_lib:timestamp(),
+                MappingLifetime = Lifetime - (Now - Start),
+                {ok, Now, InternalPort, list_to_integer(ReservedPort), MappingLifetime};
+             Error when Lifetime > 0 ->
+                %% Try to repair error code 725 - OnlyPermanentLeasesSupported
+                case only_permanent_lease_supported(Error) of
+                    true ->
+                        error_logger:info_msg("UPNP: only permanent lease supported~n", []),
+                        add_port_mapping1(NatCtx, Protocol, InternalPort, ExternalPort, 0, HttpcProfile);
+                    false ->
+                        Error
+                  end;
+            Error ->
+                Error
+        end,
+    ok = httpc:set_option(socket_opts, [], HttpcProfile),
+    Result.
 
 only_permanent_lease_supported({error, {http_error, "500", Body}}) ->
   {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
@@ -219,10 +222,13 @@ delete_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, _InternalPort,
     "</u:DeletePortMapping>",
     {ok, IAddr} = inet:parse_address(Ip),
     ok = httpc:set_option(socket_opts, [{ip, IAddr}], HttpcProfile),
-    case nat_lib:soap_request(Url, "DeletePortMapping", Msg, [], HttpcProfile) of
-        {ok, _} -> ok;
-        Error -> Error
-    end.
+    Result =
+        case nat_lib:soap_request(Url, "DeletePortMapping", Msg, [], HttpcProfile) of
+            {ok, _} -> ok;
+            Error -> Error
+        end,
+    ok = httpc:set_option(socket_opts, [], HttpcProfile),
+    Result.
 
 
 %% @doc get specific port mapping for a well known port and protocol
@@ -242,28 +248,31 @@ get_port_mapping(#nat_upnp{ip=Ip, service_url=Url}, Protocol0, ExternalPort, Htt
     "</u:GetSpecificPortMappingEntry>",
     {ok, IAddr} = inet:parse_address(Ip),
     ok = httpc:set_option(socket_opts, [{ip, IAddr}], HttpcProfile),
-    case nat_lib:soap_request(Url, "GetSpecificPortMappingEntry", Msg, [], HttpcProfile) of
-        {ok, Body} ->
-            {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
-            [Infos | _] = xmerl_xpath:string("//s:Envelope/s:Body/"
-                                             "u:GetSpecificPortMappingEntryResponse", Xml),
-            NewInternalPort =
-            extract_txt(
-              xmerl_xpath:string("NewInternalPort/text()",
-                                 Infos)
-             ),
+    Result =
+        case nat_lib:soap_request(Url, "GetSpecificPortMappingEntry", Msg, [], HttpcProfile) of
+            {ok, Body} ->
+                {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
+                [Infos | _] = xmerl_xpath:string("//s:Envelope/s:Body/"
+                                                 "u:GetSpecificPortMappingEntryResponse", Xml),
+                NewInternalPort =
+                extract_txt(
+                  xmerl_xpath:string("NewInternalPort/text()",
+                                     Infos)
+                 ),
 
-            NewInternalClient =
-            extract_txt(
-              xmerl_xpath:string("NewInternalClient/text()",
-                                 Infos)
-             ),
+                NewInternalClient =
+                extract_txt(
+                  xmerl_xpath:string("NewInternalClient/text()",
+                                     Infos)
+                 ),
 
-            {IPort, _ } = string:to_integer(NewInternalPort),
-            {ok, IPort, NewInternalClient};
-        Error ->
-            Error
-    end.
+                {IPort, _ } = string:to_integer(NewInternalPort),
+                {ok, IPort, NewInternalClient};
+            Error ->
+                Error
+        end,
+    ok = httpc:set_option(socket_opts, [], HttpcProfile),
+    Result.
 
 
 
