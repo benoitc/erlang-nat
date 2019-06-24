@@ -23,6 +23,8 @@
 -include("nat.hrl").
 -include_lib("xmerl/include/xmerl.hrl").
 
+-define(ST, <<"urn:schemas-upnp-org:device:InternetGatewayDevice:2" >>).
+
 %% @doc discover the gateway and our IP to associate
 -spec discover() -> {ok, Context:: nat:nat_upnp()}
                     | {error, term()}.
@@ -33,12 +35,11 @@ discover() ->
                     erlang:unique_integer()),
     {ok, Sock} = gen_udp:open(0, [{active, once}, inet, binary]),
 
-    ST = <<"urn:schemas-upnp-org:device:InternetGatewayDevice:2" >>,
 
     MSearch = [<<"M-SEARCH * HTTP/1.1\r\n"
                  "HOST: 239.255.255.250:1900\r\n"
                  "MAN: \"ssdp:discover\"\r\n"
-                 "ST: ">>,  ST, <<"\r\n"
+                 "ST: ">>, ?ST, <<"\r\n"
                                   "MX: 3"
                                   "\r\n\r\n">>],
 
@@ -49,34 +50,49 @@ discover() ->
     end.
 
 discover1(_Sock, _MSearch, ?NAT_TRIES) ->
-    {error, timeout};
+  {error, timeout};
 discover1(Sock, MSearch, Tries) ->
-    inet:setopts(Sock, [{active, once}]),
-    Timeout = ?NAT_INITIAL_MS bsl Tries,
-    ok = gen_udp:send(Sock, "239.255.255.250", 1900, MSearch),
+  inet:setopts(Sock, [{active, true}]),
+  Timeout = ?NAT_INITIAL_MS bsl Tries,
+  ok = gen_udp:send(Sock, "239.255.255.250", 1900, MSearch),
+  case discover_loop(Sock, Timeout) of
+    {ok, Ip, Location} ->
+      case get_service_url(binary_to_list(Location)) of
+        {ok, Url} ->
+
+          MyIp = inet_ext:get_internal_address(Ip),
+          case get_natrsipstatus(Url) of
+            enabled ->
+              {ok, #nat_upnp{service_url=Url, ip=MyIp}};
+            disabled ->
+              {error, no_nat};
+            Other ->
+              Other
+          end;
+        Error ->
+          Error
+      end;
+    error ->
+      discover1(Sock, MSearch, Tries - 1)
+  end.
+
+discover_loop(Sock, Timeout) ->
     receive
-        {udp, _Sock, Ip, _Port, Packet} ->
-            case get_location(Packet) of
-                error ->
-                    discover1(Sock, MSearch, Tries-1);
-                Location ->
-                    case get_service_url(binary_to_list(Location)) of
-                        {ok, Url} ->
-                            MyIp = inet_ext:get_internal_address(Ip),
-                            case get_natrsipstatus(Url) of
-                              enabled ->
-                                {ok, #nat_upnp{service_url=Url, ip=MyIp}};
-                              disabled ->
-                                {error, no_nat};
-                              Other ->
-                                Other
-                            end;
-                        Error ->
-                            Error
-                    end
+        {udp, Sock, Ip, _Port, Packet} ->
+            Headers = nat_lib:get_headers(Packet),
+            case maps:find(<<"St">>, Headers) of
+              {ok, ?ST} ->
+                case maps:find('Location', Headers) of
+                  {ok, Location} ->
+                    {ok, Ip, Location};
+                  error ->
+                    error
+                end;
+              _ ->
+                discover_loop(Sock, Timeout)
             end
     after Timeout ->
-              discover1(Sock, MSearch, Tries+1)
+            error
     end.
 
 get_device_address(#nat_upnp{service_url=Url}) ->
@@ -312,24 +328,14 @@ status_info(#nat_upnp{service_url=Url}) ->
 
 %% internals
 
-get_location(Raw) ->
-    case erlang:decode_packet(httph_bin, Raw, []) of
-        {ok, {http_error, _}, Rest} ->
-            get_location(Rest);
-        {ok, {http_header, _, 'Location', _, Location}, _Rest} ->
-            Location;
-        {ok, {http_header, _, _H, _, _V}, Rest} ->
-            get_location(Rest);
-        _ ->
-            error
-    end.
-
 get_service_url(RootUrl) ->
     case httpc:request(RootUrl) of
         {ok, {{_, 200, _}, _, Body}} ->
             {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
             [Device | _] = xmerl_xpath:string("//device", Xml),
             case device_type(Device) of
+                "urn:schemas-upnp-org:device:InternetGatewayDevice:1" ->
+                   natupnp_v1:get_wan_device(Device, RootUrl);
                 "urn:schemas-upnp-org:device:InternetGatewayDevice:2" ->
                     get_wan_device(Device, RootUrl);
                 _ ->

@@ -18,9 +18,12 @@
 -export([delete_port_mapping/4]).
 -export([get_port_mapping/3]).
 -export([status_info/1]).
+-export([get_wan_device/2]).
 
 -include("nat.hrl").
 -include_lib("xmerl/include/xmerl.hrl").
+
+-define(ST, <<"urn:schemas-upnp-org:device:InternetGatewayDevice:1" >>).
 
 %% @doc discover the gateway and our IP to associate
 -spec discover() -> {ok, Context:: nat:nat_upnp()}
@@ -54,22 +57,36 @@ discover1(Sock, MSearch, Tries) ->
     inet:setopts(Sock, [{active, once}]),
     Timeout = ?NAT_INITIAL_MS bsl Tries,
     ok = gen_udp:send(Sock, "239.255.255.250", 1900, MSearch),
+    case discover_loop(Sock, Timeout) of
+      {ok, Ip, Location} ->
+        case get_service_url(binary_to_list(Location)) of
+          {ok, Url} ->
+            MyIp = inet_ext:get_internal_address(Ip),
+            {ok, #nat_upnp{service_url=Url, ip=MyIp}};
+          Error ->
+            Error
+        end;
+      error ->
+        discover1(Sock, MSearch, Tries+1)
+    end.
+
+discover_loop(Sock, Timeout) ->
     receive
-        {udp, _Sock, Ip, _Port, Packet} ->
-            case get_location(Packet) of
-                error ->
-                    discover1(Sock, MSearch, Tries-1);
-                Location ->
-                    case get_service_url(binary_to_list(Location)) of
-                        {ok, Url} ->
-                            MyIp = inet_ext:get_internal_address(Ip),
-                            {ok, #nat_upnp{service_url=Url, ip=MyIp}};
-                        Error ->
-                            Error
-                    end
+        {udp, Sock, Ip, _Port, Packet} ->
+            Headers = nat_lib:get_headers(Packet),
+            case maps:find(<<"St">>, Headers) of
+              {ok, ?ST} ->
+                case maps:find('Location', Headers) of
+                  {ok, Location} ->
+                    {ok, Ip, Location};
+                  error ->
+                    error
+                end;
+              _ ->
+                discover_loop(Sock, Timeout)
             end
     after Timeout ->
-              discover1(Sock, MSearch, Tries+1)
+            error
     end.
 
 
@@ -299,18 +316,6 @@ status_info(#nat_upnp{service_url=Url}) ->
 
 
 %% internals
-
-get_location(Raw) ->
-    case erlang:decode_packet(httph_bin, Raw, []) of
-        {ok, {http_error, _}, Rest} ->
-            get_location(Rest);
-        {ok, {http_header, _, 'Location', _, Location}, _Rest} ->
-            Location;
-        {ok, {http_header, _, _H, _, _V}, Rest} ->
-            get_location(Rest);
-        _ ->
-            error
-    end.
 
 get_service_url(RootUrl) ->
     case httpc:request(RootUrl) of
