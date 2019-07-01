@@ -10,6 +10,7 @@
 -export([soap_request/3, soap_request/4]).
 -export([random_port/0]).
 -export([timestamp/0]).
+-export([get_headers/1, get_headers/2]).
 
 soap_request(Url, Function, Msg0) ->
   soap_request(Url, Function, Msg0, []).
@@ -58,3 +59,16 @@ erlang_ts() ->
         error:undef ->
             erlang:now()
     end.
+
+get_headers(Raw) ->
+  get_headers(Raw, #{}).
+
+get_headers(Raw, Headers) ->
+  case erlang:decode_packet(httph_bin, Raw, []) of
+    {ok, {http_error, _}, Rest} ->
+      get_headers(Rest, Headers);
+    {ok, {http_header, _, H, _, V}, Rest} ->
+      get_headers(Rest, Headers#{ H => V });
+    _ ->
+      Headers
+  end.
