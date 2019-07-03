@@ -179,8 +179,14 @@ add_port_mapping(Gateway, Protocol, InternalPort, ExternalPort, Lifetime) ->
       InternalPort :: non_neg_integer(),
       ExternalPortRequest :: non_neg_integer(),
       Reason :: natpmp_error().
-delete_port_mapping(Gateway, Protocol, InternalPort, ExternalPort) ->
-	case add_port_mapping(Gateway, Protocol, InternalPort, ExternalPort, 0) of
+delete_port_mapping(Gateway, Protocol, InternalPort, _ExternalPort) ->
+    %% From https://tools.ietf.org/html/rfc6886#section-3.4 :
+    %%
+    %% A client requests explicit deletion of a mapping by sending a message to
+    %% the NAT gateway requesting the mapping, with the Requested Lifetime in
+    %% Seconds set to zero.  The Suggested External Port MUST be set to zero by
+    %% the client on sending, and MUST be ignored by the gateway on reception.
+    case add_port_mapping(Gateway, Protocol, InternalPort, 0, 0) of
         {ok, _, InternalPort, 0, 0} -> ok;
         {ok, _, _, _, _} -> {error, bad_response};
         Error -> Error
