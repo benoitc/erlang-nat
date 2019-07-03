@@ -119,7 +119,7 @@ get_external_address(#nat_upnp{service_url=Url}) ->
             {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
 
             [Infos | _] = xmerl_xpath:string("//s:Envelope/s:Body/"
-                                             "u:GetExternalIPAddressResponse", Xml),
+                                             "*[local-name() = 'GetExternalIPAddressResponse']", Xml),
 
             IP = extract_txt(
                    xmerl_xpath:string("NewExternalIPAddress/text()",
