@@ -50,7 +50,7 @@ othe functions.</td></tr><tr><td valign="top"><a href="#get_device_address-1">ge
 add_port_mapping(NatCtx, Protocol, InternalPort, ExternalPortRequest) -&gt; {ok, Since, InternalPort, ExternalPort, MappingLifetime} | {error, Reason}
 </code></pre>
 
-<ul class="definitions"><li><code>NatCtx = <a href="#type-nat_ctx">nat_ctx()</a></code></li><li><code>Protocol = <a href="#type-nat_protocol">nat_protocol()</a></code></li><li><code>InternalPort = non_neg_integer()</code></li><li><code>ExternalPortRequest = non_neg_integer()</code></li><li><code>Since = non_neg_integer()</code></li><li><code>ExternalPort = non_neg_integer()</code></li><li><code>MappingLifetime = non_neg_integer()</code></li><li><code>Reason = any() | timeout</code></li></ul>
+<ul class="definitions"><li><code>NatCtx = <a href="#type-nat_ctx">nat_ctx()</a></code></li><li><code>Protocol = <a href="#type-nat_protocol">nat_protocol()</a></code></li><li><code>InternalPort = non_neg_integer()</code></li><li><code>ExternalPortRequest = non_neg_integer()</code></li><li><code>Since = non_neg_integer()</code></li><li><code>ExternalPort = non_neg_integer()</code></li><li><code>MappingLifetime = non_neg_integer() | infinity</code></li><li><code>Reason = any() | timeout</code></li></ul>
 
 add a port mapping with default lifetime
 
@@ -62,7 +62,7 @@ add a port mapping with default lifetime
 add_port_mapping(NatCtx, Protocol, InternalPort, ExternalPortRequest, Lifetime) -&gt; {ok, Since, InternalPort, ExternalPort, MappingLifetime} | {error, Reason}
 </code></pre>
 
-<ul class="definitions"><li><code>NatCtx = <a href="#type-nat_ctx">nat_ctx()</a></code></li><li><code>Protocol = <a href="#type-nat_protocol">nat_protocol()</a></code></li><li><code>InternalPort = non_neg_integer()</code></li><li><code>ExternalPortRequest = non_neg_integer()</code></li><li><code>Lifetime = non_neg_integer()</code></li><li><code>Since = non_neg_integer()</code></li><li><code>ExternalPort = non_neg_integer()</code></li><li><code>MappingLifetime = non_neg_integer()</code></li><li><code>Reason = any() | timeout()</code></li></ul>
+<ul class="definitions"><li><code>NatCtx = <a href="#type-nat_ctx">nat_ctx()</a></code></li><li><code>Protocol = <a href="#type-nat_protocol">nat_protocol()</a></code></li><li><code>InternalPort = non_neg_integer()</code></li><li><code>ExternalPortRequest = non_neg_integer()</code></li><li><code>Lifetime = non_neg_integer()</code></li><li><code>Since = non_neg_integer()</code></li><li><code>ExternalPort = non_neg_integer()</code></li><li><code>MappingLifetime = non_neg_integer() | infinity</code></li><li><code>Reason = any() | timeout()</code></li></ul>
 
 add a port mapping
 

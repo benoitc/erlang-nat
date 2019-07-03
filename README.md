@@ -2,9 +2,9 @@
 
 # nat -  implements NAT handling facilities #
 
-Copyright (c) 2016-2018 Benoît Chesneau.
+Copyright (c) 2016-2019 Benoît Chesneau.
 
-__Version:__ 0.3.1
+__Version:__ 0.4.0
 
 # nat
 
