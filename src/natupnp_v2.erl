@@ -25,6 +25,8 @@
 
 -define(ST, <<"urn:schemas-upnp-org:device:InternetGatewayDevice:2" >>).
 
+
+
 %% @doc discover the gateway and our IP to associate
 -spec discover() -> {ok, Context:: nat:nat_upnp()}
                     | {error, term()}.
@@ -33,7 +35,7 @@ discover() ->
     _ = rand_compat:seed(erlang:phash2([node()]),
                     erlang:monotonic_time(),
                     erlang:unique_integer()),
-    {ok, Sock} = gen_udp:open(0, [{active, once}, inet, binary]),
+    {ok, Sock} = gen_udp:open(0, [{active, true}, inet, binary]),
 
 
     MSearch = [<<"M-SEARCH * HTTP/1.1\r\n"
