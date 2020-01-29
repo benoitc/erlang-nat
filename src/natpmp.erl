@@ -64,7 +64,7 @@ potential_gateways() ->
     Net_192_168 = inet_cidr:parse("192.168.0.0/16"),
     Networks = [Net_10, Net_172_16, Net_192_168],
     lists:foldl(fun({_, {Addr, Mask}}, Acc) ->
-                        case is_network(Networks, Addr) of
+                        case inet_ext:is_private_address(Networks) of
                             true ->
                                 case inet_cidr:is_ipv4(Addr) of
                                     true ->
@@ -273,15 +273,6 @@ parse_status(3) -> {error, network_failure};
 parse_status(4) -> {error, out_of_resource};
 parse_status(5) -> {error, unsupported_opcode}.
 
-
-%% check if an ip is a member of the test networks
-is_network([Net | Rest], Addr) ->
-    case inet_cidr:contains(Net, Addr) of
-        true -> true;
-        false -> is_network(Rest, Addr)
-    end;
-is_network([], _Addr) ->
-    false.
 
 %% apply mask to the ip
 mask({A, B, C, D}, {E, F, G, H}) ->
