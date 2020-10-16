@@ -23,6 +23,12 @@
 -include("nat.hrl").
 -include_lib("xmerl/include/xmerl.hrl").
 
+-if(?OTP_RELEASE > 22).
+-define(URI_MOD, uri_string).
+-else.
+-define(URI_MOD, http_uri).
+-endif.
+
 -define(ST, <<"urn:schemas-upnp-org:device:InternetGatewayDevice:2" >>).
 
 %% @doc discover the gateway and our IP to associate
@@ -96,7 +102,7 @@ discover_loop(Sock, Timeout) ->
     end.
 
 get_device_address(#nat_upnp{service_url=Url}) ->
-    Res = case http_uri:parse(Url) of
+    Res = case ?URI_MOD:parse(Url) of
         {ok, {_Scheme, _UserInfo, Host, _Port, _Path, _Query}} ->
             inet:getaddr(Host, inet);
         {ok, {_Scheme, _UserInfo, Host, _Port, _Path, _Query, _Fragment}} ->
