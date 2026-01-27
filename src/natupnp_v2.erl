@@ -17,17 +17,14 @@
 -export([add_port_mapping/4, add_port_mapping/5]).
 -export([delete_port_mapping/4]).
 -export([get_port_mapping/3]).
+-export([get_port_mapping_count/1]).
+-export([list_port_mappings/1, list_port_mappings/2]).
+-export([get_generic_port_mapping_entry/2]).
 -export([status_info/1]).
 
 
 -include("nat.hrl").
 -include_lib("xmerl/include/xmerl.hrl").
-
--if(?OTP_RELEASE > 22).
--define(URI_MOD, uri_string).
--else.
--define(URI_MOD, http_uri).
--endif.
 
 -define(ST, <<"urn:schemas-upnp-org:device:InternetGatewayDevice:2" >>).
 
@@ -37,12 +34,7 @@
 -spec discover() -> {ok, Context:: nat:nat_upnp()}
                     | {error, term()}.
 discover() ->
-    _ = application:start(inets),
-    _ = rand_compat:seed(erlang:phash2([node()]),
-                    erlang:monotonic_time(),
-                    erlang:unique_integer()),
     {ok, Sock} = gen_udp:open(0, [{active, true}, inet, binary]),
-
 
     MSearch = [<<"M-SEARCH * HTTP/1.1\r\n"
                  "HOST: 239.255.255.250:1900\r\n"
@@ -104,12 +96,11 @@ discover_loop(Sock, Timeout) ->
     end.
 
 get_device_address(#nat_upnp{service_url=Url}) ->
-    Res = case ?URI_MOD:parse(Url) of
-        {ok, {_Scheme, _UserInfo, Host, _Port, _Path, _Query}} ->
+    Res = case uri_string:parse(Url) of
+        #{host := Host} ->
             inet:getaddr(Host, inet);
-        {ok, {_Scheme, _UserInfo, Host, _Port, _Path, _Query, _Fragment}} ->
-            inet:getaddr(Host, inet);
-        Error -> Error
+        {error, _, _} = Error ->
+            Error
     end,
     %% unparse the IP
     case Res of
@@ -334,12 +325,134 @@ status_info(#nat_upnp{service_url=Url}) ->
     end.
 
 
+%% @doc Get total number of port mappings
+-spec get_port_mapping_count(Context) -> {ok, Count} | {error, Reason} when
+    Context :: #nat_upnp{},
+    Count :: non_neg_integer(),
+    Reason :: term().
+get_port_mapping_count(#nat_upnp{service_url=Url}) ->
+    Message = "<u:GetPortMappingNumberOfEntries xmlns:u=\""
+        "urn:schemas-upnp-org:service:WANIPConnection:2\">"
+        "</u:GetPortMappingNumberOfEntries>",
+    case nat_lib:soap_request(Url, "GetPortMappingNumberOfEntries", Message) of
+        {ok, Body} ->
+            {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
+            case xmerl_xpath:string("//NewPortMappingNumberOfEntries/text()", Xml) of
+                [Resp | _] ->
+                    {ok, list_to_integer(extract_txt([Resp]))};
+                [] ->
+                    {error, no_count_in_response}
+            end;
+        Error ->
+            Error
+    end.
+
+%% @doc List all port mappings (with default limit of 100)
+-spec list_port_mappings(Context) -> {ok, [#port_mapping{}]} | {error, Reason} when
+    Context :: #nat_upnp{},
+    Reason :: term().
+list_port_mappings(Ctx) ->
+    list_port_mappings(Ctx, 100).
+
+%% @doc List all port mappings up to Limit
+-spec list_port_mappings(Context, Limit) -> {ok, [#port_mapping{}]} | {error, Reason} when
+    Context :: #nat_upnp{},
+    Limit :: non_neg_integer(),
+    Reason :: term().
+list_port_mappings(Ctx, Limit) ->
+    list_port_mappings_loop(Ctx, 0, Limit, []).
+
+list_port_mappings_loop(_Ctx, Index, Limit, Acc) when Index >= Limit ->
+    {ok, lists:reverse(Acc)};
+list_port_mappings_loop(Ctx, Index, Limit, Acc) ->
+    case get_generic_port_mapping_entry(Ctx, Index) of
+        {ok, Mapping} ->
+            list_port_mappings_loop(Ctx, Index + 1, Limit, [Mapping | Acc]);
+        {error, {http_error, "714", _}} ->  %% SpecifiedArrayIndexInvalid
+            {ok, lists:reverse(Acc)};
+        {error, {http_error, "713", _}} ->  %% SpecifiedArrayIndexInvalid (some routers)
+            {ok, lists:reverse(Acc)};
+        Error ->
+            Error
+    end.
+
+%% @doc Get a single port mapping by index
+-spec get_generic_port_mapping_entry(Context, Index) -> {ok, #port_mapping{}} | {error, Reason} when
+    Context :: #nat_upnp{},
+    Index :: non_neg_integer(),
+    Reason :: term().
+get_generic_port_mapping_entry(#nat_upnp{service_url=Url}, Index) ->
+    Message = "<u:GetGenericPortMappingEntry xmlns:u=\""
+        "urn:schemas-upnp-org:service:WANIPConnection:2\">"
+        "<NewPortMappingIndex>" ++ integer_to_list(Index) ++ "</NewPortMappingIndex>"
+        "</u:GetGenericPortMappingEntry>",
+    case nat_lib:soap_request(Url, "GetGenericPortMappingEntry", Message) of
+        {ok, Body} ->
+            parse_port_mapping_entry(Body);
+        Error ->
+            Error
+    end.
+
+parse_port_mapping_entry(Body) ->
+    {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
+    case xmerl_xpath:string("//s:Envelope/s:Body/"
+                            "*[local-name() = 'GetGenericPortMappingEntryResponse']", Xml) of
+        [Infos | _] ->
+            RemoteHost = safe_extract_txt(xmerl_xpath:string("NewRemoteHost/text()", Infos), ""),
+            ExternalPort = safe_extract_int(xmerl_xpath:string("NewExternalPort/text()", Infos), 0),
+            Protocol = safe_extract_protocol(xmerl_xpath:string("NewProtocol/text()", Infos)),
+            InternalPort = safe_extract_int(xmerl_xpath:string("NewInternalPort/text()", Infos), 0),
+            InternalClient = safe_extract_txt(xmerl_xpath:string("NewInternalClient/text()", Infos), ""),
+            Enabled = safe_extract_bool(xmerl_xpath:string("NewEnabled/text()", Infos)),
+            Description = safe_extract_txt(xmerl_xpath:string("NewPortMappingDescription/text()", Infos), ""),
+            LeaseDuration = safe_extract_int(xmerl_xpath:string("NewLeaseDuration/text()", Infos), 0),
+
+            {ok, #port_mapping{
+                remote_host = RemoteHost,
+                external_port = ExternalPort,
+                protocol = Protocol,
+                internal_port = InternalPort,
+                internal_client = InternalClient,
+                enabled = Enabled,
+                description = Description,
+                lease_duration = LeaseDuration
+            }};
+        [] ->
+            {error, invalid_response}
+    end.
+
+safe_extract_txt([], Default) -> Default;
+safe_extract_txt(Xml, _Default) -> extract_txt(Xml).
+
+safe_extract_int([], Default) -> Default;
+safe_extract_int(Xml, _Default) ->
+    case string:to_integer(extract_txt(Xml)) of
+        {Int, _} when is_integer(Int) -> Int;
+        _ -> 0
+    end.
+
+safe_extract_bool([]) -> false;
+safe_extract_bool(Xml) ->
+    case extract_txt(Xml) of
+        "1" -> true;
+        "true" -> true;
+        _ -> false
+    end.
+
+safe_extract_protocol([]) -> tcp;
+safe_extract_protocol(Xml) ->
+    case string:to_lower(extract_txt(Xml)) of
+        "udp" -> udp;
+        _ -> tcp
+    end.
+
+
 %% internals
 
 get_service_url(RootUrl) ->
-    case httpc:request(RootUrl) of
-        {ok, {{_, 200, _}, _, Body}} ->
-            {Xml, _} = xmerl_scan:string(Body, [{space, normalize}]),
+    case hackney:request(get, RootUrl, [], <<>>, [with_body]) of
+        {ok, 200, _RespHeaders, Body} ->
+            {Xml, _} = xmerl_scan:string(binary_to_list(Body), [{space, normalize}]),
             [Device | _] = xmerl_xpath:string("//device", Xml),
             case device_type(Device) of
                 "urn:schemas-upnp-org:device:InternetGatewayDevice:1" ->
@@ -349,10 +462,10 @@ get_service_url(RootUrl) ->
                 _ ->
                     {error,  no_gateway_device}
             end;
-        {ok, {{_, StatusCode, _}, _, _}} ->
+        {ok, StatusCode, _RespHeaders, _Body} ->
             {error, integer_to_list(StatusCode)};
-        Error ->
-            Error
+        {error, Reason} ->
+            {error, Reason}
     end.
 
 get_natrsipstatus(Url) ->

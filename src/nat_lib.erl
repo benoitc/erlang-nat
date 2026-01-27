@@ -5,7 +5,6 @@
 %%% Copyright (c) 2016-2018 Benoît Chesneau <benoitc@refuge.io>
 
 -module(nat_lib).
--compile(nowarn_deprecated_function).
 
 -export([soap_request/3, soap_request/4]).
 -export([random_port/0]).
@@ -25,40 +24,38 @@ soap_request(Url, Function, Msg0, Options) ->
     Action = "\"urn:schemas-upnp-org:service:WANIPConnection:1#"
              ++ Function ++ "\"",
 
-    Headers = [{"Content-Length", integer_to_list(length(Msg))},
-               {"User-Agent", "Darwin/10.0.0, UPnP/1.0, MiniUPnPc/1.3"},
-               {"SOAPAction", Action},
-               {"Connection", "close"},
-               {"Cache-Control", "no-cache"},
-               {"Pragma", "no-cache"}],
+    Headers = [{<<"Content-Type">>, <<"text/xml; charset=\"utf-8\"">>},
+               {<<"User-Agent">>, <<"Darwin/10.0.0, UPnP/1.0, MiniUPnPc/1.3">>},
+               {<<"SOAPAction">>, list_to_binary(Action)},
+               {<<"Connection">>, <<"close">>},
+               {<<"Cache-Control">>, <<"no-cache">>},
+               {<<"Pragma">>, <<"no-cache">>}],
 
+    HackneyOpts = case proplists:get_value(socket_opts, Options, []) of
+        [] -> [with_body];
+        SockOpts ->
+            case proplists:get_value(ip, SockOpts) of
+                undefined -> [with_body];
+                IpAddr -> [{connect_options, [{ip, IpAddr}]}, with_body]
+            end
+    end,
 
-    Req = {Url, Headers, "text/xml; charset=\"utf-8\"", Msg},
-
-    case httpc:request(post, Req, [], Options) of
-        {ok, {{_, 200, _}, _, Body}} ->
-            {ok, Body};
-        OK = {ok, {{_, Status, _}, _, Body}} ->
-            error_logger:info_msg("UPNP SOAP error: ~p~n", [OK]),
-            {error, {http_error, integer_to_list(Status), Body}};
-        Error ->
-            Error
+    case hackney:request(post, Url, Headers, list_to_binary(Msg), HackneyOpts) of
+        {ok, 200, _RespHeaders, RespBody} ->
+            {ok, binary_to_list(RespBody)};
+        {ok, Status, _RespHeaders, RespBody} ->
+            error_logger:info_msg("UPNP SOAP error: ~p ~p~n", [Status, RespBody]),
+            {error, {http_error, integer_to_list(Status), binary_to_list(RespBody)}};
+        {error, Reason} ->
+            {error, Reason}
     end.
 
 random_port() ->
-    random:uniform(16#FFFF - 10000) + 10000.
+    rand:uniform(16#FFFF - 10000) + 10000.
 
 timestamp() ->
-    {Mega,Sec, _} = erlang_ts(),
-    Mega*1000000+Sec.
-
-erlang_ts() ->
-    try
-        erlang:timestamp()
-    catch
-        error:undef ->
-            erlang:now()
-    end.
+    {Mega, Sec, _} = erlang:timestamp(),
+    Mega * 1000000 + Sec.
 
 get_headers(Raw) ->
   get_headers(Raw, #{}).

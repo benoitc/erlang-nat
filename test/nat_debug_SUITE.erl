@@ -11,6 +11,7 @@
 
 -export([
     natpmp/1
+    ,natpcp/1
     ,natupnp_v1/1
     ,natupnp_v2/1
 ]).
@@ -28,7 +29,7 @@
 %% @end
 %%--------------------------------------------------------------------
 all() ->
-    [natpmp, natupnp_v1, natupnp_v2].
+    [natpmp, natpcp, natupnp_v1, natupnp_v2].
 
 %%--------------------------------------------------------------------
 %% @public
@@ -86,6 +87,40 @@ natpmp(_Config) ->
             ?assertEqual(GetIntAddress, natpmp:get_internal_address(Context)),
             nat:debug_stop();
         no_nat -> ok;
+        {error, _Reason} -> ok
+    end.
+
+natpcp(_Config) ->
+    Discover = natpcp:discover(),
+    nat:debug_start(?SCAN_FILE),
+    ?assertEqual(Discover, natpcp:discover()),
+    nat:debug_stop(),
+
+    case Discover of
+        {ok, Context} ->
+            AddPortMapping = natpcp:add_port_mapping(Context, tcp, 8333, 8333, 3600),
+            nat:debug_start(?SCAN_FILE),
+            case AddPortMapping of
+                {ok, _Since, InternalPort, ExternalPortRequest, MappingLifetime} ->
+                    ?assertMatch(
+                        {ok, _, InternalPort, ExternalPortRequest, MappingLifetime}
+                        ,natpcp:add_port_mapping(Context, tcp, 8333, 8333, 3600)
+                    );
+                Any ->
+                    ?assertEqual(Any, natpcp:add_port_mapping(Context, tcp, 8333, 8333, 3600))
+            end,
+            nat:debug_stop(),
+
+            GetExtAddress = natpcp:get_external_address(Context),
+            nat:debug_start(?SCAN_FILE),
+            ?assertEqual(GetExtAddress, natpcp:get_external_address(Context)),
+            nat:debug_stop(),
+
+            GetIntAddress = natpcp:get_internal_address(Context),
+            nat:debug_start(?SCAN_FILE),
+            ?assertEqual(GetIntAddress, natpcp:get_internal_address(Context)),
+            nat:debug_stop();
+        {error, no_nat} -> ok;
         {error, _Reason} -> ok
     end.
 

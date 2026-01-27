@@ -8,10 +8,13 @@
 
 -export([get_device_address/1]).
 -export([get_external_address/1]).
+-export([get_external_address_with_epoch/1]).
 -export([get_internal_address/1]).
 -export([discover/0]).
 -export([add_port_mapping/4, add_port_mapping/5]).
 -export([delete_port_mapping/4]).
+-export([delete_all_mappings/2]).
+-export([system_gateways/0, potential_gateways/0]).
 
 -include("nat.hrl").
 
@@ -40,8 +43,20 @@ get_device_address(Gateway) ->
     ExternalIp :: inet:ip_address() | inet:hostname(),
     Reason :: natpmp_error().
 get_external_address(Gateway) ->
-	Msg = << 0, 0 >>,
-	nat_rpc(Gateway, Msg, 0).
+    case get_external_address_with_epoch(Gateway) of
+        {ok, Ip, _Since} -> {ok, inet:ntoa(Ip)};
+        Error -> Error
+    end.
+
+%% @doc get external ip with epoch time for freshness detection
+-spec get_external_address_with_epoch(Gateway) -> {ok, ExternalIp, Since} | {error, Reason} when
+    Gateway :: inet:ip_address() | inet:hostname(),
+    ExternalIp :: inet:ip_address(),
+    Since :: non_neg_integer(),
+    Reason :: natpmp_error().
+get_external_address_with_epoch(Gateway) ->
+    Msg = << 0, 0 >>,
+    nat_rpc(Gateway, Msg, 0).
 
 %% @doc get internal address used for this gateway
 -spec get_internal_address(Gateway) -> {ok, InternalIp} when
@@ -193,6 +208,20 @@ delete_port_mapping(Gateway, Protocol, InternalPort, _ExternalPort) ->
     end.
 
 
+%% @doc delete all port mappings for a protocol
+%% RFC 6886 Section 3.4: To delete all mappings for a protocol,
+%% set internal_port=0, external_port=0, lifetime=0
+-spec delete_all_mappings(Gateway, Protocol) -> ok | {error, Reason} when
+    Gateway :: inet:ip_address() | inet:hostname(),
+    Protocol :: tcp | udp,
+    Reason :: natpmp_error().
+delete_all_mappings(Gateway, Protocol) ->
+    case add_port_mapping(Gateway, Protocol, 0, 0, 0) of
+        {ok, _, 0, 0, 0} -> ok;
+        {ok, _, _, _, _} -> {error, bad_response};
+        Error -> Error
+    end.
+
 
 %% ---------------------
 %% - private functions -
@@ -200,7 +229,6 @@ delete_port_mapping(Gateway, Protocol, InternalPort, _ExternalPort) ->
 %%
 
 nat_rpc(Gateway0, Msg, OpCode) ->
-	_ = application:start(inets),
     Gateway = inet_ext:parse_address(Gateway0),
     {ok, Sock} = gen_udp:open(0, [{active, once}, inet, binary]),
     try
@@ -233,13 +261,13 @@ nat_rpc1(Sock, Gateway, Msg, OpCode, Tries) ->
 
 
 parse_response(<< _Version, ResponseCode, Status:16/unsigned-integer,
-                  _Since:32/unsigned-integer, A, B, C, D >>, OpCode) ->
+                  Since:32/unsigned-integer, A, B, C, D >>, OpCode) ->
 
      ExpectedCode = OpCode + 128,
      if
          ExpectedCode =:= ResponseCode ->
             case parse_status(Status) of
-                ok -> {ok, inet:ntoa({A, B, C, D})};
+                ok -> {ok, {A, B, C, D}, Since};
                 Error -> Error
             end;
          true ->
