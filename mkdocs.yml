@@ -50,9 +50,8 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
-  - API Reference:
-    - nat: api/nat.md
-    - nat_server: api/nat_server.md
+  - nat: api/nat.md
+  - nat_server: api/nat_server.md
   - Protocols:
     - Overview: protocols/index.md
     - UPnP IGD: protocols/upnp.md
