@@ -2,19 +2,26 @@
 %%% This file is part of erlang-nat released under the MIT license.
 %%% See the NOTICE for more information.
 %%%
-%%% Copyright (c) 2016-2018 Benoît Chesneau <benoitc@refuge.io>
+%%% Copyright (c) 2016-2024 Benoît Chesneau <benoitc@refuge.io>
 
 -module(nat).
 
+%% Main API (uses nat_server)
 -export([discover/0]).
--export([get_device_address/1]).
--export([get_external_address/1]).
--export([get_internal_address/1]).
--export([add_port_mapping/4, add_port_mapping/5]).
--export([delete_port_mapping/4]).
--export([delete_all_mappings/2]).
--export([list_port_mappings/1, list_port_mappings/2]).
--export([get_port_mapping_count/1]).
+-export([get_context/0]).
+-export([add_port_mapping/3, add_port_mapping/4]).
+-export([delete_port_mapping/3]).
+-export([get_external_address/0]).
+-export([get_device_address/0]).
+-export([get_internal_address/0]).
+-export([list_mappings/0]).
+-export([reg_pid/1, unreg_pid/1]).
+-export([reg_fun/1, unreg_fun/1]).
+
+%% Internal API (for nat_server)
+-export([discover_internal/0]).
+
+%% Debug API
 -export([debug_start/1]).
 -export([debug_stop/0]).
 
@@ -23,14 +30,14 @@
 -define(BACKENDS, [natupnp_v1, natupnp_v2, natpmp, natpcp]).
 -define(DISCOVER_TIMEOUT, 10000).
 
--type nat_ctx() :: any().
+-type nat_ctx() :: {module(), term()}.
 -type nat_protocol() :: tcp | udp.
 
--export_type([nat_ctx/0,
-              nat_protocol/0,
-              nat_upnp/0]).
+-export_type([nat_ctx/0, nat_protocol/0]).
 
--type nat_upnp() :: #nat_upnp{}.
+%%%===================================================================
+%%% Debug API
+%%%===================================================================
 
 -spec debug_start(string()) -> ok.
 debug_start(File) ->
@@ -96,144 +103,111 @@ teardown_mocks() ->
     catch meck:unload(inet_ext),
     ok.
 
--spec discover() -> {ok, NatCtx} | no_nat when
-      NatCtx :: nat_ctx().
-%% @doc discover a NAT gateway and return a context that can be used with
-%% other functions.
+%%%===================================================================
+%%% Main API
+%%%===================================================================
+
+-spec discover() -> ok | no_nat | {error, term()}.
+%% @doc Discover a NAT gateway and store the context in nat_server.
 discover() ->
+    nat_server:discover().
+
+-spec get_context() -> {ok, nat_ctx()} | {error, no_context}.
+%% @doc Get the stored NAT context.
+get_context() ->
+    nat_server:get_context().
+
+-spec add_port_mapping(Protocol, InternalPort, ExternalPort) -> Result when
+    Protocol :: nat_protocol(),
+    InternalPort :: non_neg_integer(),
+    ExternalPort :: non_neg_integer(),
+    Result :: {ok, Since :: non_neg_integer(), InternalPort :: non_neg_integer(),
+               ExternalPort :: non_neg_integer(), Lifetime :: non_neg_integer() | infinity} |
+              {error, term()}.
+%% @doc Add a port mapping with default lifetime (auto-renewed).
+add_port_mapping(Protocol, InternalPort, ExternalPort) ->
+    nat_server:add_port_mapping(Protocol, InternalPort, ExternalPort).
+
+-spec add_port_mapping(Protocol, InternalPort, ExternalPort, Lifetime) -> Result when
+    Protocol :: nat_protocol(),
+    InternalPort :: non_neg_integer(),
+    ExternalPort :: non_neg_integer(),
+    Lifetime :: non_neg_integer(),
+    Result :: {ok, Since :: non_neg_integer(), InternalPort :: non_neg_integer(),
+               ExternalPort :: non_neg_integer(), ActualLifetime :: non_neg_integer() | infinity} |
+              {error, term()}.
+%% @doc Add a port mapping with specified lifetime (auto-renewed).
+add_port_mapping(Protocol, InternalPort, ExternalPort, Lifetime) ->
+    nat_server:add_port_mapping(Protocol, InternalPort, ExternalPort, Lifetime).
+
+-spec delete_port_mapping(Protocol, InternalPort, ExternalPort) -> ok | {error, term()} when
+    Protocol :: nat_protocol(),
+    InternalPort :: non_neg_integer(),
+    ExternalPort :: non_neg_integer().
+%% @doc Delete a port mapping (cancels auto-renewal timer).
+delete_port_mapping(Protocol, InternalPort, ExternalPort) ->
+    nat_server:delete_port_mapping(Protocol, InternalPort, ExternalPort).
+
+-spec get_external_address() -> {ok, string()} | {error, term()}.
+%% @doc Get the external (public) IP address.
+get_external_address() ->
+    nat_server:get_external_address().
+
+-spec get_device_address() -> {ok, string()} | {error, term()}.
+%% @doc Get the NAT gateway's IP address.
+get_device_address() ->
+    nat_server:get_device_address().
+
+-spec get_internal_address() -> {ok, string()} | {error, term()}.
+%% @doc Get the local device's IP address.
+get_internal_address() ->
+    nat_server:get_internal_address().
+
+-spec list_mappings() -> [{Protocol, InternalPort, ExternalPort, ExpiresAt}] when
+    Protocol :: tcp | udp,
+    InternalPort :: non_neg_integer(),
+    ExternalPort :: non_neg_integer(),
+    ExpiresAt :: non_neg_integer() | infinity.
+%% @doc List all managed port mappings.
+list_mappings() ->
+    nat_server:list_mappings().
+
+-spec reg_pid(pid()) -> ok.
+%% @doc Register pid to receive {nat_event, Event} messages.
+reg_pid(Pid) ->
+    nat_server:reg_pid(Pid).
+
+-spec unreg_pid(pid()) -> ok.
+%% @doc Unregister pid from receiving events.
+unreg_pid(Pid) ->
+    nat_server:unreg_pid(Pid).
+
+-spec reg_fun(fun((Event :: term()) -> any())) -> {ok, reference()}.
+%% @doc Register callback function for events.
+reg_fun(Fun) ->
+    nat_server:reg_fun(Fun).
+
+-spec unreg_fun(reference()) -> ok.
+%% @doc Unregister callback function by reference.
+unreg_fun(Ref) ->
+    nat_server:unreg_fun(Ref).
+
+%%%===================================================================
+%%% Internal API
+%%%===================================================================
+
+-spec discover_internal() -> {ok, nat_ctx()} | no_nat.
+%% @doc Internal discovery function used by nat_server.
+discover_internal() ->
     Self = self(),
     Ref = make_ref(),
     Workers = spawn_workers(?BACKENDS, Self, Ref, []),
     discover_loop(Workers, Ref).
 
--spec get_device_address(NatCtx) -> {ok, DeviceIp} | {error, Reason} when
-      NatCtx :: nat_ctx(),
-      DeviceIp :: string(),
-      Reason :: any().
-%% @doc get the IP address of the gateway.
-get_device_address({Mod, Ctx}) ->
-    Mod:get_device_address(Ctx).
+%%%===================================================================
+%%% Internal Functions
+%%%===================================================================
 
--spec get_external_address(NatCtx) -> {ok, ExternalIp} | {error, Reason} when
-      NatCtx :: nat_ctx(),
-      ExternalIp :: string(),
-      Reason :: any().
-%% @doc return the external address of the gateway device
-get_external_address({Mod, Ctx}) ->
-    Mod:get_external_address(Ctx).
-
--spec get_internal_address(NatCtx) -> {ok, InternalIp} | {error, Reason} when
-      NatCtx :: nat_ctx(),
-      InternalIp :: string(),
-      Reason :: any().
-%% @doc return the address address of the local device
-get_internal_address({Mod, Ctx}) ->
-    Mod:get_internal_address(Ctx).
-
-
--spec add_port_mapping(NatCtx, Protocol, InternalPort, ExternalPortRequest) ->
-    {ok, Since, InternalPort, ExternalPort, MappingLifetime} | {error, Reason}
-      when
-      NatCtx :: nat_ctx(),
-      Protocol :: nat_protocol(),
-      InternalPort :: non_neg_integer(),
-      ExternalPortRequest :: non_neg_integer(),
-      Since :: non_neg_integer(),
-      ExternalPort :: non_neg_integer(),
-      MappingLifetime :: non_neg_integer() | infinity,
-      Reason :: any() | timeout.
-%% @doc add a port mapping with default lifetime
-add_port_mapping(NatCtx, Protocol, InternalPort, ExternalPort) ->
-    add_port_mapping(NatCtx, Protocol, InternalPort, ExternalPort,
-                     ?RECOMMENDED_MAPPING_LIFETIME_SECONDS).
-
--spec add_port_mapping(NatCtx, Protocol, InternalPort, ExternalPortRequest, Lifetime) ->
-    {ok, Since, InternalPort, ExternalPort, MappingLifetime} | {error, Reason}
-      when
-      NatCtx :: nat_ctx(),
-      Protocol :: nat_protocol(),
-      InternalPort :: non_neg_integer(),
-      ExternalPortRequest :: non_neg_integer(),
-      Lifetime :: non_neg_integer(),
-      Since :: non_neg_integer(),
-      ExternalPort :: non_neg_integer(),
-      MappingLifetime :: non_neg_integer() | infinity,
-      Reason :: any() | timeout().
-%% @doc add a port mapping
-add_port_mapping({Mod, Ctx}, Protocol, InternalPort, ExternalPort, Lifetime) ->
-    Mod:add_port_mapping(Ctx, Protocol, InternalPort, ExternalPort, Lifetime).
-
-
--spec delete_port_mapping(NatCtx, Protocol, InternalPort, ExternalPortRequest) ->
-    ok | {error, Reason}
-      when
-      NatCtx :: nat_ctx(),
-      Protocol :: nat_protocol(),
-      InternalPort :: non_neg_integer(),
-      ExternalPortRequest :: non_neg_integer(),
-      Reason :: any() | timeout.
-%% @doc delete a port mapping
-delete_port_mapping({Mod, Ctx}, Protocol, InternalPort, ExternalPort) ->
-    Mod:delete_port_mapping(Ctx, Protocol, InternalPort, ExternalPort).
-
-
--spec delete_all_mappings(NatCtx, Protocol) ->
-    ok | {error, Reason}
-      when
-      NatCtx :: nat_ctx(),
-      Protocol :: nat_protocol(),
-      Reason :: not_supported | any().
-%% @doc delete all port mappings for a protocol (NAT-PMP only)
-delete_all_mappings({natpmp, Ctx}, Protocol) ->
-    natpmp:delete_all_mappings(Ctx, Protocol);
-delete_all_mappings({_, _}, _Protocol) ->
-    {error, not_supported}.  %% UPnP doesn't have bulk delete
-
-
--spec list_port_mappings(NatCtx) ->
-    {ok, [#port_mapping{}]} | {error, Reason}
-      when
-      NatCtx :: nat_ctx(),
-      Reason :: not_supported | any().
-%% @doc list all port mappings (UPnP only)
-list_port_mappings(NatCtx) ->
-    list_port_mappings(NatCtx, 100).
-
--spec list_port_mappings(NatCtx, Limit) ->
-    {ok, [#port_mapping{}]} | {error, Reason}
-      when
-      NatCtx :: nat_ctx(),
-      Limit :: non_neg_integer(),
-      Reason :: not_supported | any().
-%% @doc list all port mappings up to Limit (UPnP only)
-list_port_mappings({natupnp_v1, Ctx}, Limit) ->
-    natupnp_v1:list_port_mappings(Ctx, Limit);
-list_port_mappings({natupnp_v2, Ctx}, Limit) ->
-    natupnp_v2:list_port_mappings(Ctx, Limit);
-list_port_mappings({natpmp, _}, _Limit) ->
-    {error, not_supported};
-list_port_mappings({natpcp, _}, _Limit) ->
-    {error, not_supported}.
-
-
--spec get_port_mapping_count(NatCtx) ->
-    {ok, Count} | {error, Reason}
-      when
-      NatCtx :: nat_ctx(),
-      Count :: non_neg_integer(),
-      Reason :: not_supported | any().
-%% @doc get the total number of port mappings (UPnP only)
-get_port_mapping_count({natupnp_v1, Ctx}) ->
-    natupnp_v1:get_port_mapping_count(Ctx);
-get_port_mapping_count({natupnp_v2, Ctx}) ->
-    natupnp_v2:get_port_mapping_count(Ctx);
-get_port_mapping_count({natpmp, _}) ->
-    {error, not_supported};
-get_port_mapping_count({natpcp, _}) ->
-    {error, not_supported}.
-
-
-%% internals
 discover_loop([], _Ref) ->
     no_nat;
 discover_loop(Workers, Ref) ->
@@ -251,7 +225,6 @@ discover_loop(Workers, Ref) ->
             no_nat
     end.
 
-
 discover_worker(Backend, Parent, Ref) ->
     case Backend:discover() of
         {ok, Ctx} ->
@@ -262,10 +235,10 @@ discover_worker(Backend, Parent, Ref) ->
 
 spawn_workers([], _Parent, _Ref, Workers) ->
     Workers;
-spawn_workers([Backend | Rest], Parent, Ref, Acc) ->
+spawn_workers([Backend | Rest], Parent, Ref, Acc) ->
     Pid = spawn_link(fun() -> discover_worker(Backend, Parent, Ref) end),
     monitor_worker(Pid),
-    spawn_workers(Rest, Parent, Ref, [Pid | Acc]).
+    spawn_workers(Rest, Parent, Ref, [Pid | Acc]).
 
 monitor_worker(Pid) ->
     MRef = erlang:monitor(process, Pid),
@@ -279,7 +252,7 @@ demonitor_worker(Pid) ->
     ok.
 
 kill_workers([]) -> ok;
-kill_workers([Pid | Rest]) ->
+kill_workers([Pid | Rest]) ->
     catch unlink(Pid),
     catch exit(Pid, shutdown),
     receive
