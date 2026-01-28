@@ -2,7 +2,7 @@
 
 All notable changes to erlang-nat are documented here.
 
-## [0.5.0] - 2025
+## [0.5.0] - 2026
 
 ### Added
 
