@@ -151,9 +151,7 @@ handle_call(discover, _From, State) ->
         {ok, NewState} ->
             {reply, ok, NewState};
         {error, no_nat} ->
-            {reply, no_nat, State};
-        {error, Reason} ->
-            {reply, {error, Reason}, State}
+            {reply, no_nat, State}
     end;
 
 handle_call(get_context, _From, #nat_state{nat_ctx = undefined} = State) ->
@@ -316,9 +314,7 @@ do_discover(State) ->
             State3 = start_ip_monitoring(State2),
             {ok, State3};
         no_nat ->
-            {error, no_nat};
-        {error, Reason} ->
-            {error, Reason}
+            {error, no_nat}
     end.
 
 do_add_mapping(_Protocol, _InternalPort, _ExternalPort, _Lifetime,

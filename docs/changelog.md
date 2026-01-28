@@ -2,6 +2,13 @@
 
 All notable changes to erlang-nat are documented here.
 
+## [0.5.2] - 2026
+
+### Fixed
+
+- Fix dialyzer warnings: remove unreachable clauses in nat_server
+- Export nat_upnp/0 type from nat module
+
 ## [0.5.1] - 2026
 
 ### Changed

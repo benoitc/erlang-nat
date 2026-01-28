@@ -1,6 +1,6 @@
 {application, nat, [
 	{description, "NAT traversal library for Erlang - UPnP IGD, NAT-PMP, PCP"},
-	{vsn, "0.5.1"},
+	{vsn, "0.5.2"},
 	{modules, []},
 	{registered, [nat_server]},
 	{applications, [kernel, stdlib, inet_cidr, inet_ext, hackney, xmerl]},

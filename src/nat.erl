@@ -32,8 +32,9 @@
 
 -type nat_ctx() :: {module(), term()}.
 -type nat_protocol() :: tcp | udp.
+-type nat_upnp() :: #nat_upnp{}.
 
--export_type([nat_ctx/0, nat_protocol/0]).
+-export_type([nat_ctx/0, nat_protocol/0, nat_upnp/0]).
 
 %%%===================================================================
 %%% Debug API
