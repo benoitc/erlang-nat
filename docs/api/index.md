@@ -2,6 +2,42 @@
 
 This section documents the public API modules of erlang-nat.
 
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph App["Your Application"]
+        A[nat:discover/0]
+        B[nat:add_port_mapping/3]
+        C[nat:reg_pid/1]
+    end
+
+    subgraph NAT["erlang-nat"]
+        NS[nat_server<br/>gen_server]
+
+        subgraph Protocols["Protocol Modules"]
+            U1[natupnp_v1]
+            U2[natupnp_v2]
+            NP[natpmp]
+            PC[natpcp]
+        end
+    end
+
+    subgraph Router["NAT Router"]
+        R[Gateway Device]
+    end
+
+    A --> NS
+    B --> NS
+    C --> NS
+    NS --> U1 & U2 & NP & PC
+    U1 & U2 -->|UPnP/SOAP| R
+    NP -->|NAT-PMP| R
+    PC -->|PCP| R
+
+    NS -.->|Events| App
+```
+
 ## Modules
 
 | Module | Description |

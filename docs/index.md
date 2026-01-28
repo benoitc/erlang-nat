@@ -13,41 +13,33 @@ erlang-nat provides a unified interface for NAT (Network Address Translation) tr
 - **IPv4 and IPv6 Support**: Full IPv6 support via PCP protocol
 - **OTP Application**: Runs as a supervised OTP application
 
-## Architecture
+## How It Works
 
 ```mermaid
-flowchart TB
-    subgraph App["Your Application"]
-        A[nat:discover/0]
-        B[nat:add_port_mapping/3]
-        C[nat:reg_pid/1]
+flowchart LR
+    subgraph Internet["Internet"]
+        Remote["Remote Client<br/>198.51.100.50"]
     end
 
-    subgraph NAT["erlang-nat"]
-        NS[nat_server<br/>gen_server]
-
-        subgraph Protocols["Protocol Modules"]
-            U1[natupnp_v1]
-            U2[natupnp_v2]
-            NP[natpmp]
-            PC[natpcp]
-        end
+    subgraph NAT["NAT Router"]
+        direction TB
+        GW["Gateway<br/>Public: 203.0.113.42<br/>Private: 192.168.1.1"]
     end
 
-    subgraph Router["NAT Router"]
-        R[Gateway Device]
+    subgraph LAN["Local Network"]
+        direction TB
+        Server["Your Erlang App<br/>192.168.1.100:8333"]
     end
 
-    A --> NS
-    B --> NS
-    C --> NS
-    NS --> U1 & U2 & NP & PC
-    U1 & U2 -->|UPnP/SOAP| R
-    NP -->|NAT-PMP| R
-    PC -->|PCP| R
+    Remote <-->|"203.0.113.42:8333"| GW
+    GW <-->|"192.168.1.100:8333"| Server
 
-    NS -.->|Events| App
+    Server -.->|"nat:add_port_mapping<br/>(tcp, 8333, 8333)"| GW
 ```
+
+<div style="text-align: center; margin: 1em 0; color: #666;">
+<em>erlang-nat automatically creates port mappings so remote clients can reach your application</em>
+</div>
 
 ## Supported Protocols
 
