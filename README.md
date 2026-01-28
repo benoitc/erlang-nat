@@ -26,7 +26,7 @@ NAT traversal library for Erlang/OTP supporting UPnP IGD, NAT-PMP, and PCP proto
 
 ```erlang
 %% Add to your rebar.config
-{deps, [{nat, "0.5.0"}]}.
+{deps, [{nat, "0.5.1"}]}.
 ```
 
 ```erlang

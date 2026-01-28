@@ -2,6 +2,14 @@
 
 All notable changes to erlang-nat are documented here.
 
+## [0.5.1] - 2026
+
+### Changed
+
+- Improved hex.pm integration with rebar3_ex_doc
+- Updated README with documentation links and badges
+- Cleaner app.src metadata for hex.pm
+
 ## [0.5.0] - 2026
 
 ### Added
