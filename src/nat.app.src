@@ -3,13 +3,13 @@
 	{vsn, "0.5.0"},
 	{modules, []},
 	{registered, [nat_server]},
-	{applications, [kernel,stdlib,inet_cidr,inet_ext,hackney,xmerl]},
+	{applications, [kernel, stdlib, inet_cidr, inet_ext, hackney, xmerl]},
 	{mod, {nat_app, []}},
 	{licenses, ["MIT"]},
-	{links, [
-		{"GitHub", "https://github.com/benoitc/erlang-nat"},
-		{"Documentation", "https://benoitc.github.io/erlang-nat/"},
-		{"Changelog", "https://benoitc.github.io/erlang-nat/changelog/"}
-	]},
-	{files, ["src", "include", "LICENSE", "NOTICE", "README.md", "rebar.config"]}
+	{links, #{
+		<<"Homepage">> => <<"https://benoitc.github.io/erlang-nat/">>,
+		<<"GitHub">> => <<"https://github.com/benoitc/erlang-nat">>,
+		<<"Sponsor">> => <<"https://github.com/sponsors/benoitc">>
+	}},
+	{files, ["src", "include", "LICENSE", "README.md", "rebar.config"]}
 ]}.

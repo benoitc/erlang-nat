@@ -1,82 +1,68 @@
+# erlang-nat
 
+NAT traversal library for Erlang/OTP supporting UPnP IGD, NAT-PMP, and PCP protocols.
 
-# nat -  implements NAT handling facilities #
+[![Hex.pm](https://img.shields.io/hexpm/v/nat.svg)](https://hex.pm/packages/nat)
+[![GitHub Actions](https://github.com/benoitc/erlang-nat/actions/workflows/docs.yml/badge.svg)](https://github.com/benoitc/erlang-nat/actions)
 
-Copyright (c) 2016-2019 Benoît Chesneau.
+## Documentation
 
-__Version:__ 0.4.1
+**Full documentation: [benoitc.github.io/erlang-nat](https://benoitc.github.io/erlang-nat/)**
 
-# nat
+- [Getting Started](https://benoitc.github.io/erlang-nat/getting-started/)
+- [API Reference](https://benoitc.github.io/erlang-nat/api/)
+- [Protocols](https://benoitc.github.io/erlang-nat/protocols/)
+- [Events](https://benoitc.github.io/erlang-nat/events/)
 
-Library that implements NAT facilities.
+## Features
 
-Currently supported protocols:
-- natpmp
-- UPNP v1
-- UPNP v2
+- **Multiple Protocols**: UPnP IGD (v1 & v2), NAT-PMP, PCP
+- **Auto-renewal**: Port mappings are automatically renewed before expiry
+- **Event System**: Get notified of mapping changes and IP changes
+- **IPv6 Support**: Full IPv6 support via PCP protocol
+- **OTP Application**: Runs as a supervised OTP application
 
-## Usage
+## Quick Start
 
-### Discover the NAT gateway:
-
-You should start by discovering the NAT gateway if it exists:
-
-```
-1> {ok, Ctx} = nat:discover().
-{ok,{natupnp_v1,{nat_upnp,"http://192.168.1.254:5678/control/wan_ip_connection",
-                          "192.168.1.22"}}}
-```
-
-If OK you will be able to use the context in other functions. For example to get 
-the external gateway:
-
-```
-2> nat:get_external_address(Ctx).
-{ok,"88.163.70.217"}
+```erlang
+%% Add to your rebar.config
+{deps, [{nat, "0.5.0"}]}.
 ```
 
-And the local IP associated to this:
+```erlang
+%% Start the application
+application:ensure_all_started(nat).
 
-```
-3> nat:get_internal_address(Ctx).
-{ok,"192.168.1.22"}
-```
+%% Discover NAT gateway
+ok = nat:discover().
 
-### Map an External IP Address
+%% Get external IP
+{ok, ExtIp} = nat:get_external_address().
 
-```
-{ok, Ctx} = nat:discover(),
-Protocol = tcp,
-InternalPort = 80,
-ExternalPortRequest = 8080,
-Lifetime = 3600,
+%% Add port mapping (auto-renewed)
+{ok, _Since, 8333, 8333, 3600} = nat:add_port_mapping(tcp, 8333, 8333).
 
-{ok, Since, InternalPort, ExternalPortRequest, MappingLifetime} = \
-    nat:add_port_mapping(Ctx, Protocol, InternalPort, ExternalPortRequest, Lifetime).
-```
+%% Register for events
+nat:reg_pid(self()).
+receive
+    {nat_event, {ip_changed, OldIp, NewIp}} ->
+        io:format("IP changed: ~s -> ~s~n", [OldIp, NewIp])
+end.
 
-This map the port 80 to the port 8080.
-
-> Note: pass 0 to the ExternalPortRequest to ask to the router to create a dynamic port.
-
-### Remove a port mapping
-
-```
-ok = nat:delete_port_mapping(Ctx, Protocol, InternalPort, ExternalPort)
+%% Delete mapping
+ok = nat:delete_port_mapping(tcp, 8333, 8333).
 ```
 
-## Contribute
+## Requirements
 
-For issues, comments or feedback please create an [issue](https://github.com/benoitc/erlang-nat/issues).
+- Erlang/OTP 26 or later
+- rebar3
 
+## License
 
-## Modules ##
+MIT License - see [LICENSE](LICENSE) for details.
 
+## Support
 
-<table width="100%" border="0" summary="list of modules">
-<tr><td><a href="https://github.com/benoitc/erlang-nat/blob/master/doc/nat.md" class="module">nat</a></td></tr>
-<tr><td><a href="https://github.com/benoitc/erlang-nat/blob/master/doc/nat_lib.md" class="module">nat_lib</a></td></tr>
-<tr><td><a href="https://github.com/benoitc/erlang-nat/blob/master/doc/natpmp.md" class="module">natpmp</a></td></tr>
-<tr><td><a href="https://github.com/benoitc/erlang-nat/blob/master/doc/natupnp_v1.md" class="module">natupnp_v1</a></td></tr>
-<tr><td><a href="https://github.com/benoitc/erlang-nat/blob/master/doc/natupnp_v2.md" class="module">natupnp_v2</a></td></tr></table>
-
+- [GitHub Issues](https://github.com/benoitc/erlang-nat/issues)
+- [GitHub Sponsors](https://github.com/sponsors/benoitc)
