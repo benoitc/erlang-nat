@@ -32,10 +32,17 @@ All notable changes to erlang-nat are documented here.
   - Full protocol support (UPnP, NAT-PMP, PCP)
 
 - **Documentation**
-  - MkDocs-based documentation
-  - API reference
-  - Protocol guides
+  - MkDocs-based documentation with Material theme
+  - API reference for all public modules
+  - Protocol guides (UPnP, NAT-PMP, PCP)
   - Event system guide
+  - Advanced usage patterns
+  - GitHub Pages deployment via GitHub Actions
+
+- **Project Infrastructure**
+  - GitHub Actions workflow for documentation deployment
+  - GitHub Sponsors funding configuration
+  - Updated hex.pm metadata with documentation links
 
 ### Changed
 
