@@ -1,0 +1,73 @@
+site_name: erlang-nat
+site_description: NAT traversal library for Erlang/OTP
+site_url: https://github.com/benoitc/erlang-nat
+repo_url: https://github.com/benoitc/erlang-nat
+repo_name: benoitc/erlang-nat
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        erlang:
+          paths: [src]
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - API Reference:
+    - nat: api/nat.md
+    - nat_server: api/nat_server.md
+  - Protocols:
+    - Overview: protocols/index.md
+    - UPnP IGD: protocols/upnp.md
+    - NAT-PMP: protocols/natpmp.md
+    - PCP: protocols/pcp.md
+  - Events: events.md
+  - Docker Testing: docker.md
+  - Advanced Usage: advanced.md
+  - Changelog: changelog.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/benoitc/erlang-nat
