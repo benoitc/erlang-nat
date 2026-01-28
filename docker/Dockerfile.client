@@ -1,0 +1,24 @@
+# Erlang client for testing erlang-nat
+FROM erlang:26-alpine
+
+RUN apk add --no-cache \
+    git \
+    make \
+    gcc \
+    libc-dev \
+    bash \
+    curl \
+    miniupnpc \
+    tcpdump \
+    iproute2
+
+WORKDIR /app
+
+# Copy the erlang-nat source
+COPY . /app/
+
+# Build the project
+RUN rebar3 compile && chmod +x docker/test-nat.escript
+
+# Default command - start an Erlang shell with nat loaded
+CMD ["rebar3", "shell"]

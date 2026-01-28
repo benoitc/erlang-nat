@@ -1,0 +1,79 @@
+# Docker Compose for testing erlang-nat with NAT-PMP/PCP/UPnP
+#
+# Network topology:
+#   external_net (172.20.0.0/24) -- WAN side
+#       |
+#   [gateway] (172.20.0.2 / 172.21.0.1) -- miniupnpd NAT router
+#       |
+#   internal_net (172.21.0.0/24) -- LAN side
+#       |
+#   [client] (172.21.0.10) -- erlang-nat test client
+#
+# Usage:
+#   docker compose up -d gateway
+#   docker compose run --rm client
+#
+#   # In Erlang shell:
+#   application:ensure_all_started(nat).
+#   nat:discover().
+#   nat:add_port_mapping(tcp, 8080, 8080).
+#   nat:list_mappings().
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: nat-gateway
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    sysctls:
+      - net.ipv4.ip_forward=1
+    environment:
+      - EXT_IF=eth0
+      - INT_IF=eth1
+    networks:
+      external_net:
+        ipv4_address: 172.20.0.2
+      internal_net:
+        ipv4_address: 172.21.0.1
+    healthcheck:
+      test: ["CMD", "pgrep", "miniupnpd"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  client:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.client
+    container_name: nat-client
+    stdin_open: true
+    tty: true
+    cap_add:
+      - NET_RAW
+    networks:
+      internal_net:
+        ipv4_address: 172.21.0.10
+    depends_on:
+      gateway:
+        condition: service_healthy
+    # Route external traffic through gateway
+    # Note: This is set up automatically by Docker for the default route
+
+networks:
+  external_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+          gateway: 172.20.0.1
+  internal_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
+          gateway: 172.21.0.254
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "false"

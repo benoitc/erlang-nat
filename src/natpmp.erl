@@ -96,7 +96,7 @@ potential_gateways() ->
                 end, [], inet_ext:routes()).
 
 system_gateways() ->
-    [Ip || {_, Ip} <- inet_ext:gateways()].
+    [Ip || {_, Ip} <- inet_ext:gateways(), is_list(Ip), Ip =/= []].
 
 %% @doc discover a Nat gateway
 -spec discover() -> {ok, Gateway} | {error, any()} when

@@ -1,0 +1,15 @@
+_build/
+.git/
+.github/
+*.beam
+erl_crash.dump
+rebar3.crashdump
+rebar.lock
+.rebar3/
+docker/
+!docker/test-nat.escript
+doc/
+*.md
+!README.md
+.gitignore
+.dockerignore
