@@ -1,11 +1,15 @@
 {application, nat, [
-	{description, "implements NAT handling facilities"},
+	{description, "NAT traversal library for Erlang - UPnP IGD, NAT-PMP, PCP"},
 	{vsn, "0.5.0"},
 	{modules, []},
 	{registered, [nat_server]},
 	{applications, [kernel,stdlib,inet_cidr,inet_ext,hackney,xmerl]},
 	{mod, {nat_app, []}},
-  {licenses, ["MIT"]},
-  {links, [{"Github", "https://github.com/benoitc/erlang-nat"}]},
-  {files, ["scripts", "src", "LICENSE", "NOTICE", "README.md", "rebar.config", "rebar.lock"]}
+	{licenses, ["MIT"]},
+	{links, [
+		{"GitHub", "https://github.com/benoitc/erlang-nat"},
+		{"Documentation", "https://benoitc.github.io/erlang-nat/"},
+		{"Changelog", "https://benoitc.github.io/erlang-nat/changelog/"}
+	]},
+	{files, ["src", "include", "LICENSE", "NOTICE", "README.md", "rebar.config"]}
 ]}.
