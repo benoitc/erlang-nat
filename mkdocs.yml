@@ -32,10 +32,6 @@ theme:
 
 plugins:
   - search
-  - mkdocstrings:
-      handlers:
-        erlang:
-          paths: [src]
 
 markdown_extensions:
   - admonition

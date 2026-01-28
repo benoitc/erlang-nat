@@ -9,3 +9,4 @@ _build/
 erl_crash.dump
 data/
 log/
+site/
