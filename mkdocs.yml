@@ -23,7 +23,7 @@ theme:
     - navigation.instant
     - navigation.tracking
     - navigation.sections
-    - navigation.expand
+    - navigation.indexes
     - navigation.top
     - search.suggest
     - search.highlight
@@ -50,8 +50,10 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
-  - nat: api/nat.md
-  - nat_server: api/nat_server.md
+  - API Reference:
+    - api/index.md
+    - nat: api/nat.md
+    - nat_server: api/nat_server.md
   - Protocols:
     - Overview: protocols/index.md
     - UPnP IGD: protocols/upnp.md
@@ -61,6 +63,9 @@ nav:
   - Docker Testing: docker.md
   - Advanced Usage: advanced.md
   - Changelog: changelog.md
+
+extra_css:
+  - stylesheets/extra.css
 
 extra:
   social:
